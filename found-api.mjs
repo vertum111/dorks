@@ -69,7 +69,9 @@ export function foundApi(config = process.env) {
  const proofMessage = (accountId, expiresAt) =>
   `Claim up to three free DORKS Found Caps for ${accountId} on NEAR ${network}. Contract: ${contractId}. Expires: ${new Date(expiresAt).toISOString()}.`;
  const ticketData = (accountId, nonce, expiresAt) => JSON.stringify([accountId, nonce, expiresAt]);
- const inventory = accountId => view('nft_tokens_for_owner', {account_id: accountId, limit: 64});
+ const inventory = (accountId, offset = 0) => view('nft_tokens_for_owner', {
+  account_id:accountId, from_index:String(offset), limit:64,
+ });
 
  return async (req, res, url) => {
   if (!url.pathname.startsWith('/api/found/')) return false;
@@ -87,7 +89,12 @@ export function foundApi(config = process.env) {
    if (route === 'inventory' && req.method === 'GET' && contractId) {
     const accountId = url.searchParams.get('account');
     if (!accountPattern.test(accountId ?? '')) return send(400, {error:'Invalid NEAR account.'});
-    return send(200, {tokens: await inventory(accountId)});
+    const offset = Number(url.searchParams.get('offset') ?? 0);
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > 1024) {
+     return send(400, {error:'Invalid inventory offset.'});
+    }
+    const tokens = await inventory(accountId, offset);
+    return send(200, {tokens, nextOffset:tokens.length === 64 && offset + 64 < 1024 ? offset + 64 : null});
    }
    if (route === 'transfers' && req.method === 'GET' && contractId) {
     const accountId = url.searchParams.get('account');

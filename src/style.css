@@ -110,3 +110,10 @@ body.inspecting .match-cue,body.in-lobby .match-cue,body.tuning-gesture .match-c
 @media(max-width:760px),(max-height:650px){.rarity-picker{font-size:15px}.rarity-picker select{min-height:36px}}
 
 .found-mint-link { display:inline-block; margin:0 10px 6px 0; color:inherit; text-decoration:underline; text-underline-offset:3px; }
+.hud-actions,.collection-actions,.wallet-controls{display:flex;align-items:center;gap:8px}
+.hud-actions,.collection-actions{pointer-events:auto;justify-content:flex-end;flex-wrap:wrap}
+.wallet-controls{font:15px Pangolin,cursive}
+.wallet-controls [data-wallet-account]{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wallet-controls [data-found-wallet]{font-size:16px;min-height:42px;padding:7px 11px}
+.wallet-empty{position:absolute;top:43%;left:50%;transform:translate(-50%,-50%);width:min(390px,calc(100% - 40px));text-align:center;font-family:Pangolin,cursive}
+@media(max-width:650px){.hud-actions,.collection-actions{max-width:56%;gap:5px}.wallet-controls [data-wallet-account]{max-width:95px;font-size:12px}.wallet-controls [data-found-wallet]{font-size:14px;min-height:36px;padding:4px 8px}}

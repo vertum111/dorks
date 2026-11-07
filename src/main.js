@@ -12,7 +12,8 @@ import {throwFrame,applyHandFrame,applyCapFlight,tableHeight,DURATION,READY} fro
 import {createHandRenderer} from './hand-outline.js';
 import {mountRoundUi} from './round-ui.js';
 import {presentGesture} from './gestures.js';
-import {mountGestureTuner} from './gesture-settings.js';
+import {mountGameWallet} from './game-wallet.js';
+import {mountGestureTuner,readGestureSettings} from './gesture-settings.js';
 import {newGame,resolveTurn} from './game.js';
 import {mountThrowMeter,timingPosition,MIN_HOLD_MS} from './throw-meter.js';
 import {mountSessionUi,arrow} from './session-ui.js';
@@ -25,15 +26,16 @@ import {mountTeaserRecorder} from './teaser-recorder.js';
 const bootLoader=mountLoader();const audio=createAudioDesign();const matchCues=mountMatchCues();
 
 const $=s=>document.querySelector(s);
-let saved={score:[0,0],owned:[1,2]};
+let saved={score:[0,0]};
 try {
   const s=JSON.parse(localStorage.getItem('dragon-caps-v1'));
-  if(s&&Array.isArray(s.score)&&s.score.length===2&&s.score.every(n=>Number.isFinite(n)&&n>=0)&&Array.isArray(s.owned))
-    saved={score:s.score,owned:s.owned.filter(n=>Number.isInteger(n)&&n>=1&&n<=dragons.length)};
+  if(s&&Array.isArray(s.score)&&s.score.length===2&&s.score.every(n=>Number.isFinite(n)&&n>=0))
+    saved={score:s.score};
 } catch {}
 let teaserRecorder=null;
 let state=newGame(saved.score),selected=0,equipped=0,view='arena',busy=false,charging=false;
-let galleryIndices=dragons.map((_,index)=>index);
+let galleryIndices=[], walletCaps=[], selectedToken;
+const editGestures=import.meta.env.DEV;
 let chargeStart=0,position=0,timer,animation=null,chargePickup=null,handShow=null;
 let roundDragons=[0,2],meshes=[],held=[true,true],searchingHand=false,lastDrumBeat=-1;const drumPoint=new THREE.Vector3();
 const capFromMint=new URLSearchParams(location.search).get('cap');
@@ -51,7 +53,7 @@ $('#app').innerHTML=`
 <main class="playground">
   <header class="hud">
     <button class="brand" id="home" aria-label="Dorks — back to game"><img src="/brand/dorks-wordmark.svg" alt="DORKS"><span>very odd dragons</span></button>
-    <button id="open-session" class="paper-button">Session <span id="session-count">0 played</span></button>
+    <div class="hud-actions"><div class="wallet-controls"><span data-wallet-account hidden></span><button class="paper-button" data-found-wallet>Connect wallet</button></div><button id="open-session" class="paper-button">Session <span id="session-count">0 played</span></button></div>
   </header>
   <div id="stage" role="img" aria-label="3D cap game table"></div>
   <div class="table-note" aria-hidden="true">slap it. snag it.</div>
@@ -62,16 +64,17 @@ $('#app').innerHTML=`
     <button id="next" class="primary" hidden>One more!</button>
     <span id="shot-hint">Focus button + hold Space · Esc cancels</span>
   </section>
-  <nav class="bottom-bar" aria-label="Game menu"><button id="open-collection" class="paper-button">My dorks <span id="owned-count">2/${dragons.length}</span></button><div><button id="tune-gesture" class="paper-button">Gesture</button><a class="round-button x-link" href="https://x.com/playdorks" target="_blank" rel="noopener noreferrer" aria-label="DORKS on X · opens a new tab"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 4 L12 4 24 24 17 24 Z M23 4 Q14 14 5 24"/></svg></a><button id="sound" class="round-button" aria-label="Sound settings" aria-pressed="false">♪</button><button id="help" class="round-button" aria-label="How to play">?</button></div></nav>
+  <nav class="bottom-bar" aria-label="Game menu"><button id="open-collection" class="paper-button">My dorks <span id="owned-count">0</span></button><div>${editGestures?'<button id="tune-gesture" class="paper-button">Gesture</button>':''}<a class="round-button x-link" href="https://x.com/playdorks" target="_blank" rel="noopener noreferrer" aria-label="DORKS on X · opens a new tab"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 4 L12 4 24 24 17 24 Z M23 4 Q14 14 5 24"/></svg></a><button id="sound" class="round-button" aria-label="Sound settings" aria-pressed="false">♪</button><button id="help" class="round-button" aria-label="How to play">?</button></div></nav>
   <section id="collection" class="collection" hidden aria-label="Cap collection">
-    <div class="collection-heading"><div><h1>Your dorks.</h1><a class="found-mint-link" href="/mint">Found drop</a><label class="rarity-picker" for="rarity-filter">Rarity <select id="rarity-filter"><option value="All">All caps</option>${['Found','Common','Rare','Epic','Legendary'].map(r=>`<option>${r}</option>`).join('')}</select></label></div><button id="close-collection" class="paper-button">${arrow('left')} Back to lobby</button></div>
+    <div class="collection-heading"><div><h1>Your dorks.</h1><a class="found-mint-link" href="/mint">Found drop</a></div><div class="collection-actions"><div class="wallet-controls"><span data-wallet-account hidden></span><button class="paper-button" data-found-wallet>Connect wallet</button></div><button id="close-collection" class="paper-button">${arrow('left')} Back to lobby</button></div></div>
+    <div class="wallet-empty" id="wallet-empty"><p id="wallet-message" role="status"></p><button class="primary" data-found-wallet>Connect wallet</button><button class="paper-button" id="retry-wallet" hidden>Retry</button></div>
     <div class="gallery-navigation" aria-label="Browse caps"><button id="previous-cap" class="round-button" aria-label="Previous cap">${arrow('left')}</button><span id="gallery-loading" role="status" hidden>Waking this dork…</span><button id="next-cap" class="round-button" aria-label="Next cap">${arrow('right')}</button></div><div class="cap-info" aria-live="polite"><span id="serial"></span><h2 id="dragon-name"></h2><div id="traits"></div><p id="dragon-desc"></p></div>
     
-    <div class="cards" role="group" aria-label="Caps in this rarity">${dragons.map((d,i)=>`<button class="cap-card ${d.foil?'has-foil':''} ${d.sprite?'has-sprite':''}" data-dragon="${i}" style="--cap-bg:${d.color}" aria-label="Inspect ${d.name}, ${d.rarity}${d.foil?', holo foil':''}"><span class="thumb-art"><img src="${frontImage(d)}" alt="${d.name} dragon" width="100" height="100" loading="lazy" decoding="async">${d.foil?'<i class="foil-dot" aria-hidden="true">✦</i>':''}</span><span>${d.name}</span></button>`).join('')}</div>
+    <div class="cards" role="group" aria-label="Your Found Caps"></div>
     <div class="collection-pick"><span id="chosen-status">Your next troublemaker.</span><button id="choose" class="primary">Use this dork</button></div>
   </section>
 </main>
-<dialog id="rules"><button id="close-help" class="round-button" aria-label="Close rules">×</button><img class="rules-logo" src="/brand/dorks-wordmark.svg" alt="DORKS"><h2>Caps on the table!</h2><ol><li>Find a player and both tap Ready, or choose Bot practice. Hold the yellow button to aim. Release inside the striped target; the star marks perfect timing. A better release helps, but every flip still has some chaos.</li><li>You and your rival throw one cap each. Only yours lands face up? You get to slam the pair!</li><li>Flip both face up in one slam to win the pair. Missed? Your rival gets a turn.</li><li>A tie? Rock, paper, scissors! You have 5 seconds to choose. First winner takes the pair.</li></ol><p>Timing helps. Chaos helps itself. Your collection is saved in this browser. Bot practice and casual online matches never move your NFTs.</p><button id="start-help" class="primary">Got it. Slam!</button></dialog>`;
+<dialog id="rules"><button id="close-help" class="round-button" aria-label="Close rules">×</button><img class="rules-logo" src="/brand/dorks-wordmark.svg" alt="DORKS"><h2>Caps on the table!</h2><ol><li>Find a player and both tap Ready, or choose Bot practice. Hold the yellow button to aim. Release inside the striped target; the star marks perfect timing. A better release helps, but every flip still has some chaos.</li><li>You and your rival throw one cap each. Only yours lands face up? You get to slam the pair!</li><li>Flip both face up in one slam to win the pair. Missed? Your rival gets a turn.</li><li>A tie? Rock, paper, scissors! You have 5 seconds to choose. First winner takes the pair.</li></ol><p>Timing helps. Chaos helps itself. Connect your wallet to see your Found Caps. Bot practice and casual online matches never move your NFTs.</p><button id="start-help" class="primary">Got it. Slam!</button></dialog>`;
 
 const throwMeter=mountThrowMeter($('#throw-meter'),{onTarget:()=>audio.play('target')});
 const container=$('#stage');
@@ -203,7 +206,7 @@ let sessionUi;sessionUi=mountSessionUi({
 });
 $('#open-session').onclick=()=>sessionUi.showHistory();
 let gestureSnapshot=null;
-const gestureTuner=mountGestureTuner({
+const gestureTuner=editGestures?mountGestureTuner({
  onOpen(settings,player,gesture){
   gestureSnapshot={handShow,visibility:meshes.map(m=>m.visible),minDistance:controls.minDistance,maxDistance:controls.maxDistance};clearTimeout(timer);busy=true;
   handShow={kind:'preview',player,gesture,palmReady:true,started:performance.now()-1000};
@@ -215,8 +218,8 @@ const gestureTuner=mountGestureTuner({
   if(!gestureSnapshot)return;handShow=gestureSnapshot.handShow;meshes.forEach((m,i)=>m.visible=gestureSnapshot.visibility[i]);controls.minDistance=gestureSnapshot.minDistance;controls.maxDistance=gestureSnapshot.maxDistance;gestureSnapshot=null;
   controls.enabled=false;arenaCamera();busy=false;document.body.classList.remove('tuning-gesture');update();scheduleBot();
  }
-});
-$('#tune-gesture').onclick=()=>{if(busy||charging||view!=='arena')return;gestureTuner.open();};
+}):{settingsFor:readGestureSettings};
+if(editGestures)$('#tune-gesture').onclick=()=>{if(busy||charging||view!=='arena')return;gestureTuner.open();};
 function persist(){saved.score=[...state.score];try{localStorage.setItem('dragon-caps-v1',JSON.stringify(saved));}catch{}}
 function update(){
   const finished=state.phase==='finished';
@@ -228,9 +231,9 @@ function update(){
   $('#next').hidden=!finished||busy;$('#next').textContent='Rematch?';throwMeter.sync({available:!$('#slam').disabled,finished:finished||state.phase==='rps',turn:state.turn});
   $('#slam').setAttribute('aria-pressed',String(charging));$('.slam-action').textContent=charging?'Release to slam!':$('#slam').disabled?'Wait for your turn':'Hold to aim';$('.slam-subtitle').textContent=charging?'aim for the striped target':$('#slam').disabled?'watch the caps fly':'then release to slam';
   $('#shot-hint').hidden=finished||busy||state.player!==0;
-  $('#owned-count').textContent=`${saved.owned.length}/${dragons.length}`;
+  $('#owned-count').textContent=`${walletCaps.length}`;
   $('#open-collection').disabled=busy||charging;
-  $('#tune-gesture').disabled=busy||charging;
+  if(editGestures)$('#tune-gesture').disabled=busy||charging;
   if(view==='arena')container.setAttribute('aria-disabled',String(busy||state.player!==0||finished));else container.removeAttribute('aria-disabled');
 }
 
@@ -285,7 +288,7 @@ function resetMatch(){
 function finishRound(next,online=false){
  animation=null;state=next;clearTimeout(timer);held=[false,false];audio.play(resultReaction(state));
  if(!online)sessionUi.recordPractice(state,roundDragons);
- if(state.player===0)saved.owned=[...new Set([...saved.owned,...roundDragons.map(i=>dragons[i].id)])];persist();
+ persist();
  busy=true;handShow={kind:'winner',winner:state.player,palmReady:state.wonBy==='rps',started:performance.now()};update();roundUi.showResult(state);
 }
 $('#next').onclick=()=>sessionUi.replay();
@@ -296,31 +299,76 @@ function setView(v){
   $('#collection').hidden=v!=='collection';$('.hud').hidden=v==='collection';$('.shot-controls').hidden=v==='collection';$('.bottom-bar').hidden=v==='collection';$('.table-note').hidden=v==='collection';
   document.body.classList.toggle('inspecting',v==='collection');
   hands.forEach(h=>h.visible=v==='arena');meshes.forEach(m=>m.visible=v==='arena');ground.visible=v==='arena';ring.visible=v==='arena';
-  controls.enabled=false;gallery.setEnabled(v==='collection');container.tabIndex=-1;container.setAttribute('role',v==='collection'?'group':'img');container.setAttribute('aria-label',v==='arena'?'3D cap game table':'3D cap: drag to rotate');sessionUi.setHidden(v==='collection');
+  controls.enabled=false;gallery.setEnabled(v==='collection'&&galleryIndices.length>0);container.tabIndex=-1;container.setAttribute('role',v==='collection'?'group':'img');container.setAttribute('aria-label',v==='arena'?'3D cap game table':'3D cap: drag to rotate');sessionUi.setHidden(v==='collection');
   $('#close-collection').innerHTML=`${arrow('left')} Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
-  if(v==='collection'){showDragon(selected);spinHint.show();}else{spinHint.hide();arenaCamera();scheduleBot();}
+  if(v==='collection'){if(galleryIndices.length){showDragon(galleryIndices.includes(selected)?selected:galleryIndices[0]);spinHint.show();}void gameWallet.refresh();}else{spinHint.hide();arenaCamera();scheduleBot();}
   update();
 }
-function showDragon(i){
+function showDragon(i,tokenId){
+ if(!galleryIndices.includes(i))return;
+ const cap=walletCaps.find(entry=>entry.index===i&&entry.id===(tokenId??selectedToken))??walletCaps.find(entry=>entry.index===i);
+ if(!cap)return;
+ selectedToken=cap.id;
  if(selected!==wrapCap(i))audio.play('browse');selected=wrapCap(i);const d=dragons[selected];gallery.select(selected);
- $('#dragon-name').textContent=d.name;$('#dragon-desc').textContent=d.desc;$('#serial').textContent=`${galleryIndices.indexOf(selected)+1} / ${galleryIndices.length} · ${isFound(d)?'FOUND':'DORK'} #${String(d.originalId??d.id).padStart(2,'0')}`;
- $('#traits').innerHTML=`<span>${d.element}</span><span data-rarity="${d.rarity.toLowerCase()}">${d.rarity}</span>${d.foil?`<span class="foil-badge">✦ ${foilFinish(d.foil).label}</span>`:''}<span class="ownership">${isFound(d)?'Free to play':saved.owned.includes(d.id)?'In your stash':'Not collected yet'}</span>`;
+ $('#dragon-name').textContent=d.name;$('#dragon-desc').textContent=d.desc;$('#serial').textContent=`${walletCaps.indexOf(cap)+1} / ${walletCaps.length} · ${cap.id.toUpperCase()}`;
+ $('#traits').innerHTML=`<span>${d.element}</span><span data-rarity="${d.rarity.toLowerCase()}">${d.rarity}</span>${d.foil?`<span class="foil-badge">✦ ${foilFinish(d.foil).label}</span>`:''}<span class="ownership">In your wallet</span>`;
  $('#choose').textContent=selected===equipped?`${d.name} selected`:`Use ${d.name}`;
  $('#gallery-loading').textContent='Waking this dork…';$('#gallery-loading').hidden=false;
  gallery.activeCap.userData.ready.then(()=>{if(selected===wrapCap(i)){$('#gallery-loading').hidden=true;}}).catch(()=>{if(selected===wrapCap(i))$('#gallery-loading').textContent='Art failed to load. Please reload.';});
- document.querySelectorAll('[data-dragon]').forEach((b,n)=>{b.classList.toggle('selected',n===selected);b.setAttribute('aria-pressed',String(n===selected));});
- document.querySelector(`[data-dragon="${selected}"]`)?.scrollIntoView({block:'nearest',inline:'center',behavior:reduced?'instant':'smooth'});
+ for(const button of document.querySelectorAll('[data-token]')){
+  const active=button.dataset.token===selectedToken;
+  button.classList.toggle('selected',active);
+  button.setAttribute('aria-pressed',String(active));
+  if(active&&view==='collection')button.scrollIntoView({block:'nearest',inline:'center',behavior:reduced?'instant':'smooth'});
+ }
 }
 $('#open-collection').onclick=()=>setView('collection');$('#close-collection').onclick=()=>setView('arena');$('#home').onclick=()=>setView('arena');
-for(const b of document.querySelectorAll('[data-dragon]'))b.onclick=()=>showDragon(Number(b.dataset.dragon));
-$('#rarity-filter').onchange=event=>{
- const rarity=event.target.value;
- galleryIndices=dragons.flatMap((cap,index)=>rarity==='All'||cap.rarity===rarity?[index]:[]);
- const visible=new Set(galleryIndices);
- for(const card of document.querySelectorAll('[data-dragon]'))card.hidden=!visible.has(Number(card.dataset.dragon));
+
+let walletOwner;
+const gameWallet=mountGameWallet({onChange({accountId,caps,busy:loading,error,available}){
+ const inventoryChanged=walletOwner!==accountId||caps.length!==walletCaps.length||caps.some((cap,i)=>cap.id!==walletCaps[i]?.id);
+ walletOwner=accountId;
+ walletCaps=caps;
+ galleryIndices=[...new Set(caps.map(cap=>cap.index))];
  gallery.setFilter(galleryIndices);
- showDragon(visible.has(selected)?selected:galleryIndices[0]);
-};
+ gallery.setEnabled(view==='collection'&&caps.length>0);
+ $('#owned-count').textContent=String(caps.length);
+ $('#wallet-message').textContent=error||(loading?'Checking your wallet…':!available?'Wallet collections are unavailable on this network.':!accountId?'Connect a NEAR wallet to see your Found Caps.':'This wallet has no Found Caps yet.');
+ $('#wallet-empty').hidden=caps.length>0;
+ $('#wallet-empty [data-found-wallet]').hidden=Boolean(accountId)||!available||loading;
+ $('#retry-wallet').hidden=!error||loading;
+ for(const selector of ['.gallery-navigation','.cap-info','.cards','.collection-pick'])$(selector).hidden=caps.length===0;
+ if(inventoryChanged){
+  $('.cards').replaceChildren(...caps.map(entry=>{
+   const dragon=dragons[entry.index];
+   const button=document.createElement('button');
+   button.className='cap-card';
+   button.dataset.token=entry.id;
+   button.style.setProperty('--cap-bg',dragon.color);
+   const art=document.createElement('span');
+   art.className='thumb-art';
+   const img=new Image(100,100);
+   img.src=frontImage(dragon);
+   img.alt='';
+   art.append(img);
+   const label=document.createElement('span');
+   label.textContent=`${dragon.name} #${entry.serial}`;
+   button.append(art,label);
+   button.onclick=()=>showDragon(entry.index,entry.id);
+   return button;
+  }));
+  if(view==='collection'&&caps.length)showDragon(galleryIndices.includes(selected)?selected:galleryIndices[0]);
+ }
+ if(!caps.length)spinHint.hide();
+ if(!loading&&sessionUi.mode==='lobby'&&isFound(dragons[equipped])&&!caps.some(cap=>cap.index===equipped)){
+  equipped=0;
+  try{localStorage.removeItem('dorks-equipped');}catch{}
+  roundDragons=[equipped,practiceOpponents()[1]];
+  refreshMeshes();
+  sessionUi.refresh();
+ }
+}});
+$('#retry-wallet').onclick=()=>gameWallet.refresh();
 $('#previous-cap').onclick=()=>showDragon(gallery.step(-1));
 $('#next-cap').onclick=()=>showDragon(gallery.step(1));
 $('#choose').onclick=()=>{equipped=selected;try{localStorage.setItem('dorks-equipped',equipped);}catch{}if(sessionUi.mode==='lobby'){roundDragons=[equipped,practiceOpponents()[1]];refreshMeshes();}setView('arena');sessionUi.refresh();};
@@ -329,7 +377,7 @@ $('#sound').onclick=()=>audio.open();
 update();
 
 Promise.all(meshes.map(m=>m.userData.ready)).then(()=>bootLoader.done()).catch(()=>bootLoader.fail());
-window.addEventListener('keydown',e=>{if(view!=='collection')return;if(e.key==='Escape')setView('arena');else if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&e.target!==$('#rarity-filter')){e.preventDefault();showDragon(gallery.step(e.key==='ArrowRight'?1:-1));}});
+window.addEventListener('keydown',e=>{if(view!=='collection')return;if(e.key==='Escape')setView('arena');else if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&galleryIndices.length>0&&!e.target.closest('button')){e.preventDefault();showDragon(gallery.step(e.key==='ArrowRight'?1:-1));}});
 
 
 // Explicit recording mode, absent from the normal game UI.

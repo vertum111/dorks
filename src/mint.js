@@ -1,3 +1,4 @@
+import {getFoundConnector} from './found-wallet.js';
 import './style.css';
 import './mint.css';
 import {FOUND_OPENS_AT} from './found-launch.js';
@@ -205,12 +206,7 @@ function render() {
 }
 
 async function connect() {
- if (!connector) {
-  const {NearConnector} = await import('@hot-labs/near-connect');
-  const features = {signMessage:true, signAndSendTransaction:true};
-  if (drop.network === 'testnet') features.testnet = true;
-  connector = new NearConnector({network:drop.network, features, autoConnect:false});
- }
+ connector ??= await getFoundConnector(drop.network);
  const wallet = await connector.connect();
  const [account] = await wallet.getAccounts();
  if (!account) throw new Error('No NEAR account connected.');
