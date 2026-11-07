@@ -8,7 +8,7 @@ export function mountSessionUi({getSelected,onStart,onTurn,onRps,onReveal,onResu
   <div class="lobby-cap"><img id="lobby-cap-art" alt="Your chosen dragon"><span>Your cap<strong id="lobby-cap-name"></strong></span><button id="lobby-change" class="text-button">Change</button></div>
   <button id="find-player" class="primary">Find a dork</button><button id="practice" class="paper-button">Practice with Bot</button>
   <button id="cancel-search" class="paper-button" hidden>Cancel search</button>
-  <p id="lobby-foot">Real players in this lobby. Bot practice is separate.</p>
+  <p id="lobby-foot">Casual online and Bot practice. No caps are transferred.</p>
  </section>
  <div id="match-banner" class="match-banner" hidden><span id="match-opponent"></span><b id="match-series"></b><button id="leave-table" class="text-button">Leave table</button></div>
  <dialog id="session-history" class="session-history" aria-labelledby="history-title"><button id="close-history" class="round-button" aria-label="Close session history">×</button><p class="eyebrow">THIS VISIT. ALL THE CHAOS.</p><h2 id="history-title">Your session</h2><div id="session-summary"></div><ol id="match-history"></ol><p class="history-empty">Your first bad decision is still ahead of you.</p></dialog>`;
@@ -33,7 +33,7 @@ export function mountSessionUi({getSelected,onStart,onTurn,onRps,onReveal,onResu
   $('#find-player').hidden=queued;$('#find-player').disabled=(!connected&&mode!=='practice')||Boolean(room?.ready[room.side]);
   $('#find-player').textContent=room?.status==='ready'?'Ready to play':rematch?'Request rematch':'Find a dork';
   $('#practice').hidden=queued||Boolean(room);$('#cancel-search').hidden=!queued&&!rematch&&room?.status!=='ready';$('#cancel-search').textContent=queued?'Cancel search':'Back to lobby';
-  $('.lobby-cap').hidden=queued||Boolean(room);$('#lobby-foot').textContent=error?'Your cap is safe. Try again or practice with Bot.':queued?'Keep this tab open. No sneaky bot substitutions.':'Real players in this lobby. Bot practice is separate.';
+  $('.lobby-cap').hidden=queued||Boolean(room);$('#lobby-foot').textContent=error?'Your cap is safe. Try again or practice with Bot.':queued?'Keep this tab open. No sneaky bot substitutions.':'Casual online and Bot practice. No caps are transferred.';
   $('#match-banner').hidden=hidden||mode==='lobby'||rematch||room?.status==='ready';
   $('#match-opponent').textContent=mode==='practice'?'Practice · Bot':`You vs ${room?.opponent||'another dork'}`;
   const records=history.filter(h=>mode==='practice'?h.practice:h.room===room?.id),w=records.filter(h=>h.won).length;

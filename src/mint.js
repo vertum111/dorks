@@ -10,12 +10,11 @@ const inventory = document.querySelector('#mint-inventory');
 let drop;
 let connector;
 let accountId;
-const launchOnly = import.meta.env.VITE_DORKS_LAUNCH_ONLY === '1';
 const countdown = document.querySelector('#mint-countdown');
 const opens = document.querySelector('#mint-opens');
 const clock = document.querySelector('#mint-clock');
 let opensAt = Date.parse(FOUND_OPENS_AT);
-if (launchOnly) document.querySelector('#mint-back').hidden = true;
+
 
 function tickCountdown() {
  const seconds = Math.max(0, Math.ceil((opensAt - Date.now()) / 1000));
@@ -150,12 +149,22 @@ async function request(path, data) {
  return result;
 }
 
+function capIndex(token) {
+ const match = /^found-(\d{2})-(\d{2})$/.exec(token.token_id);
+ if (!match || token.owner_id !== accountId) return -1;
+ return dragons.findIndex(cap => cap.originalId === Number(match[1]) && cap.rarity === 'Found');
+}
+
+function playUrl(index) {
+ return '/play?cap=' + index;
+}
+
 function showTokens(tokens) {
  inventory.replaceChildren();
  for (const token of tokens) {
   const match = /^found-(\d{2})-(\d{2})$/.exec(token.token_id);
   if (!match || token.owner_id !== accountId) continue;
-  const index = dragons.findIndex(cap => cap.originalId === Number(match[1]));
+  const index = capIndex(token);
   if (index < 0) continue;
   const cap = dragons[index];
   const row = document.createElement('article');
@@ -166,11 +175,9 @@ function showTokens(tokens) {
   label.textContent = `Found ${cap.name} · #${match[2]}`;
   const use = document.createElement('a');
   use.className = 'paper-button';
-  use.href = '/';
+  use.href = playUrl(index);
   use.textContent = 'Use in game';
-  use.addEventListener('click', () => localStorage.setItem('dorks-equipped', String(index)));
-  row.append(image, label);
-  if (!launchOnly) row.append(use);
+  row.append(image, label, use);
   if (token.request) {
    const pending = document.createElement('span');
    const active = activeRequest(token);
@@ -233,6 +240,11 @@ action.addEventListener('click', async () => {
   const {tokens, tokenIds} = await request('claim', {...challenge, ...proof, accountId});
   showTokens(tokens);
   await loadTransfers();
+  const claimed = tokens.find(token => tokenIds.includes(token.token_id) && capIndex(token) >= 0);
+  if (claimed) {
+   window.location.assign(playUrl(capIndex(claimed)));
+   return;
+  }
   const owned = tokens.filter(token => tokenIds.includes(token.token_id)).length;
   status.textContent = owned
    ? `${owned} of your claimed Found Caps ready to play.`
@@ -268,6 +280,7 @@ async function refreshDrop() {
   document.querySelector('#mint-network').textContent = drop.contractId
    ? `NEAR ${drop.network} · ${drop.contractId}` : 'NEAR Found drop';
   if (Number.isInteger(drop.remaining)) document.querySelector('#mint-supply').textContent = `${drop.remaining.toLocaleString()} left`;
+  document.querySelector('#mint-back').hidden = !drop.enabled;
   status.textContent = drop.enabled ? 'DORKS covers the network fee.' : 'Mint is not open yet.';
  } catch {
   status.textContent = 'Mint is not open yet.';

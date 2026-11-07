@@ -1,13 +1,9 @@
-import {copyFileSync, cpSync, mkdirSync, writeFileSync} from 'node:fs';
+import {copyFileSync, renameSync, rmSync, writeFileSync} from 'node:fs';
 
 const output = 'dist-launch';
+renameSync(output + '/index.html', output + '/play.html');
 copyFileSync(output + '/mint.html', output + '/index.html');
-for (const directory of ['fonts', 'art/found']) {
- mkdirSync(output + '/' + directory, {recursive:true});
- cpSync('public/' + directory, output + '/' + directory, {recursive:true});
-}
-mkdirSync(output + '/brand', {recursive:true});
-copyFileSync('public/brand/dorks-wordmark.svg', output + '/brand/dorks-wordmark.svg');
+rmSync(output + '/hand-lab.html', {force:true});
 
 if (process.env.DORKS_API_ORIGIN) {
  const target = new URL(process.env.DORKS_API_ORIGIN);

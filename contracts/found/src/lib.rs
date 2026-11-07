@@ -40,12 +40,13 @@ pub struct Contract {
     claims: LookupMap<AccountId, Vec<TokenId>>,
     slots: LookupMap<u32, u32>,
     minted: u32,
+    opens_at_ms: u64,
 }
 
 #[near]
 impl Contract {
     #[init]
-    pub fn new(sponsor_id: AccountId, media_base_url: String) -> Self {
+    pub fn new(sponsor_id: AccountId, media_base_url: String, opens_at_ms: U64) -> Self {
         require!(
             env::predecessor_account_id() == env::current_account_id(),
             "Contract account must initialize"
@@ -54,6 +55,8 @@ impl Contract {
             media_base_url.starts_with("https://") && !media_base_url.ends_with('/'),
             "Use an HTTPS media base URL without trailing slash"
         );
+        require!(sponsor_id != env::current_account_id(), "Use a separate sponsor account");
+        require!(opens_at_ms.0 > 0, "Set a mint opening time");
         Self {
             tokens: NonFungibleToken::new(
                 StorageKey::Tokens,
@@ -78,6 +81,7 @@ impl Contract {
             claims: LookupMap::new(StorageKey::ClaimBatches),
             slots: LookupMap::new(StorageKey::Slots),
             minted: 0,
+            opens_at_ms: opens_at_ms.0,
         }
     }
 
@@ -98,6 +102,7 @@ impl Contract {
             env::predecessor_account_id() == self.sponsor_id,
             "Only the DORKS sponsor can mint"
         );
+        require!(env::block_timestamp_ms() >= self.opens_at_ms, "The Found drop is not open yet");
         let mut batch = self.claim_status(receiver_id.clone());
         let unclaimed = CAPS_PER_CLAIM.saturating_sub(batch.len() as u32);
         let count = unclaimed.min(self.remaining());

@@ -26,6 +26,6 @@ test('victory positions have finite bounds while saved wrist angles keep their r
 
 test('rock settings have independent keys and never inherit the victory pose',()=>{
  const keys=new Map([[GESTURE_KEY,JSON.stringify({pitch:71,thumbJoint0:39})]]);globalThis.localStorage={getItem:key=>keys.get(key)??null};
- assert.equal(readGestureSettings(0,'rock').pitch,0);assert.equal(readGestureSettings(1,'rock').thumbJoint0,0);
+ assert.equal(readGestureSettings(0,'rock').pitch,0);assert.equal(readGestureSettings(0,'rock').thumbJoint0,-94);assert.equal(readGestureSettings(1,'rock').thumbJoint0,-65);
  assert.notEqual(gestureKey(0,'rock'),GESTURE_KEY);assert.notEqual(gestureKey(0,'rock'),gestureKey(1,'rock'));
 });

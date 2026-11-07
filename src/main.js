@@ -36,7 +36,15 @@ let state=newGame(saved.score),selected=0,equipped=0,view='arena',busy=false,cha
 let galleryIndices=dragons.map((_,index)=>index);
 let chargeStart=0,position=0,timer,animation=null,chargePickup=null,handShow=null;
 let roundDragons=[0,2],meshes=[],held=[true,true],searchingHand=false,lastDrumBeat=-1;const drumPoint=new THREE.Vector3();
-try{const n=Number(localStorage.getItem('dorks-equipped'));if(Number.isInteger(n)&&n>=0&&n<dragons.length){selected=equipped=n;roundDragons=[n,practiceOpponents()[1]];}}catch{}
+const capFromMint=new URLSearchParams(location.search).get('cap');
+try{
+ const savedCap=capFromMint??localStorage.getItem('dorks-equipped');
+ const n=Number(savedCap);
+ if(savedCap!==null&&Number.isInteger(n)&&n>=0&&n<dragons.length){
+  selected=equipped=n;roundDragons=[n,practiceOpponents()[1]];
+  if(capFromMint!==null)localStorage.setItem('dorks-equipped',String(n));
+ }
+}catch{}
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 $('#app').innerHTML=`
@@ -63,7 +71,7 @@ $('#app').innerHTML=`
     <div class="collection-pick"><span id="chosen-status">Your next troublemaker.</span><button id="choose" class="primary">Use this dork</button></div>
   </section>
 </main>
-<dialog id="rules"><button id="close-help" class="round-button" aria-label="Close rules">×</button><img class="rules-logo" src="/brand/dorks-wordmark.svg" alt="DORKS"><h2>Caps on the table!</h2><ol><li>Find a player and both tap Ready, or choose Bot practice. Hold the yellow button to aim. Release inside the striped target; the star marks perfect timing. A better release helps, but every flip still has some chaos.</li><li>You and your rival throw one cap each. Only yours lands face up? You get to slam the pair!</li><li>Flip both face up in one slam to win the pair. Missed? Your rival gets a turn.</li><li>A tie? Rock, paper, scissors! You have 5 seconds to choose. First winner takes the pair.</li></ol><p>Timing helps. Chaos helps itself. Your collection is saved in this browser. This is a local game; NFTs are not connected yet.</p><button id="start-help" class="primary">Got it. Slam!</button></dialog>`;
+<dialog id="rules"><button id="close-help" class="round-button" aria-label="Close rules">×</button><img class="rules-logo" src="/brand/dorks-wordmark.svg" alt="DORKS"><h2>Caps on the table!</h2><ol><li>Find a player and both tap Ready, or choose Bot practice. Hold the yellow button to aim. Release inside the striped target; the star marks perfect timing. A better release helps, but every flip still has some chaos.</li><li>You and your rival throw one cap each. Only yours lands face up? You get to slam the pair!</li><li>Flip both face up in one slam to win the pair. Missed? Your rival gets a turn.</li><li>A tie? Rock, paper, scissors! You have 5 seconds to choose. First winner takes the pair.</li></ol><p>Timing helps. Chaos helps itself. Your collection is saved in this browser. Bot practice and casual online matches never move your NFTs.</p><button id="start-help" class="primary">Got it. Slam!</button></dialog>`;
 
 const throwMeter=mountThrowMeter($('#throw-meter'),{onTarget:()=>audio.play('target')});
 const container=$('#stage');

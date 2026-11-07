@@ -13,7 +13,7 @@ const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.end('ok');return;}
  if(await found(req,res,url)||await api(req,res,url))return;
  let pathname;try{pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);}catch{res.writeHead(400).end('Bad request');return;}
- const target=path.resolve(root,'.'+(pathname==='/'?'/index.html':pathname==='/mint'||pathname==='/mint/'?'/mint.html':pathname));
+ const target=path.resolve(root,'.'+(['/','/play','/play/'].includes(pathname)?'/index.html':pathname==='/mint'||pathname==='/mint/'?'/mint.html':pathname));
  if(!target.startsWith(root+path.sep)){res.writeHead(403).end('Forbidden');return;}
  fs.stat(target,(err,stat)=>{if(err||!stat.isFile()){res.writeHead(404).end('Not found');return;}res.writeHead(200,{'Content-Type':types[path.extname(target)]||'application/octet-stream','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});fs.createReadStream(target).pipe(res);});
 });

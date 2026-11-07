@@ -1,3 +1,6 @@
+import victoryPreset from '../presets/user-victory-before-split.json' with {type:'json'};
+import rockPresets from '../presets/user-rock.json' with {type:'json'};
+
 export const ROCK_GESTURE_KEY='dorks-rock-gesture-v1',BOT_ROCK_GESTURE_KEY='dorks-rock-gesture-bot-v1';
 export const GESTURE_KEY='dorks-middle-gesture-v1',BOT_GESTURE_KEY='dorks-middle-gesture-bot-v1';
 export const gestureFingers=[['thumb','Thumb'],['index','Index finger'],['middle','Middle finger'],['ring','Ring finger'],['pinky','Little finger']];
@@ -8,7 +11,7 @@ export function normalizeGesture(value={}){return Object.fromEntries(Object.keys
 export function defaultBotGesture(yours){return {...normalizeGesture(yours),positionX:.5,positionY:-.5,positionZ:3.5};}
 export function gestureKey(player,name='middle'){return name==='rock'?(player===1?BOT_ROCK_GESTURE_KEY:ROCK_GESTURE_KEY):(player===1?BOT_GESTURE_KEY:GESTURE_KEY);}
 export function readGestureSettings(player=0,name='middle'){
- const fallback=name==='rock'?{...gestureDefaults}:player===1?defaultBotGesture(readGestureSettings(0)):{...gestureDefaults};
+ const fallback=name==='rock'?normalizeGesture(rockPresets[player===1?1:0]):player===1?defaultBotGesture(readGestureSettings(0)):normalizeGesture(victoryPreset);
  try{const value=JSON.parse(localStorage.getItem(gestureKey(player,name))||'null');return value&&typeof value==='object'&&!Array.isArray(value)?normalizeGesture(value):fallback;}catch{return fallback;}
 }
 export function mountGestureTuner({onOpen,onChange,onClose,onGameView}){

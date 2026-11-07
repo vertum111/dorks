@@ -30,6 +30,13 @@ async function readBody(req) {
  return JSON.parse(raw);
 }
 
+export function isScopedSponsorKey(permission, contractId) {
+ const scope = permission?.FunctionCall;
+ return scope?.receiver_id === contractId &&
+  scope.method_names?.length === 1 && scope.method_names[0] === 'claim' &&
+  /^[1-9][0-9]*$/.test(String(scope.allowance));
+}
+
 export function foundApi(config = process.env) {
  const network = config.NEAR_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
  const contractId = config.FOUND_CONTRACT_ID;
@@ -38,7 +45,12 @@ export function foundApi(config = process.env) {
  const sponsorId = config.FOUND_SPONSOR_ID;
  const secret = config.FOUND_CHALLENGE_SECRET;
  const siteOrigin = config.DORKS_SITE_ORIGIN;
- const enabled = Boolean(contractId && sponsorId && config.FOUND_SPONSOR_KEY && secret?.length >= 32);
+ // Browsers treat loopback as a secure context. Only testnet may use HTTP here.
+ const validSiteOrigin = siteOrigin?.startsWith('https://') ||
+  (network === 'testnet' && /^http:\/\/(?:localhost|127\.0\.0\.1)(?::[0-9]+)?$/.test(siteOrigin ?? ''));
+ const enabled = Boolean(config.FOUND_MINT_ENABLED === '1' && contractId && sponsorId &&
+  contractId !== sponsorId && config.FOUND_SPONSOR_KEY && secret?.length >= 32 &&
+  validSiteOrigin);
  const recipient = siteOrigin ? new URL(siteOrigin).host : 'DORKS Found local';
  let minting = false;
  let connection;
@@ -47,8 +59,7 @@ export function foundApi(config = process.env) {
  const chain = () => connection ??= import('near-api-js').then(sdk => {
   const rpc = new sdk.JsonRpcProvider({url:config.NEAR_RPC_URL ??
    (network === 'mainnet' ? 'https://free.rpc.fastnear.com' : 'https://test.rpc.fastnear.com')});
-  const sponsor = enabled ? new sdk.Account(sponsorId, rpc, config.FOUND_SPONSOR_KEY) : null;
-  return {...sdk, rpc, sponsor};
+  return {...sdk, rpc};
  });
  const view = async (method, args = {}) => {
   const {rpc} = await chain();
@@ -56,7 +67,7 @@ export function foundApi(config = process.env) {
  };
  const mac = value => createHmac('sha256', secret).update(value).digest();
  const proofMessage = (accountId, expiresAt) =>
-  `Claim one free DORKS Found Cap for ${accountId} on NEAR ${network}. Contract: ${contractId}. Expires: ${new Date(expiresAt).toISOString()}.`;
+  `Claim up to three free DORKS Found Caps for ${accountId} on NEAR ${network}. Contract: ${contractId}. Expires: ${new Date(expiresAt).toISOString()}.`;
  const ticketData = (accountId, nonce, expiresAt) => JSON.stringify([accountId, nonce, expiresAt]);
  const inventory = accountId => view('nft_tokens_for_owner', {account_id: accountId, limit: 64});
 
@@ -111,7 +122,7 @@ export function foundApi(config = process.env) {
        typeof signature !== 'string' || !/^[A-Za-z0-9+/]{86}==$/.test(signature)) {
     return send(400, {error:'The wallet must sign with an Ed25519 full-access key.'});
    }
-   const {baseDecode, rpc, sponsor, teraToGas} = await chain();
+   const {Account, KeyPair, baseDecode, rpc, teraToGas} = await chain();
    const rawKey = Buffer.from(baseDecode(publicKey.slice(8)));
    if (rawKey.length !== 32) return send(400, {error:'Invalid wallet key.'});
    const key = createPublicKey({key:Buffer.concat([ed25519Spki, rawKey]), format:'der', type:'spki'});
@@ -126,6 +137,16 @@ export function foundApi(config = process.env) {
     let tokenIds = await view('claim_status', {account_id:accountId});
     if (!Array.isArray(tokenIds)) return send(503, {error:'The Found contract needs an update.'});
     if (tokenIds.length < 3 && await view('remaining') > 0) {
+     const sponsorKey = config.FOUND_SPONSOR_KEY;
+     const sponsorAccess = await rpc.viewAccessKey({
+      accountId:sponsorId, publicKey:KeyPair.fromString(sponsorKey).getPublicKey().toString(),
+      finalityQuery:{finality:'final'},
+     });
+     if (!isScopedSponsorKey(sponsorAccess.permission, contractId)) {
+      console.error('Found sponsor key must be limited to claim with a finite gas allowance.');
+      return send(503, {error:'Sponsored mint is unavailable.'});
+     }
+     const sponsor = new Account(sponsorId, rpc, sponsorKey);
      await sponsor.callFunction({
       contractId, methodName:'claim', args:{receiver_id:accountId},
       gas:teraToGas('100'), deposit:0n, waitUntil:'FINAL',

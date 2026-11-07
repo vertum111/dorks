@@ -1,0 +1,19 @@
+[
+  {
+    "roll": 92,
+    "wristJointPitch": -5, "wristJointRoll": 6, "wristJointYaw": -16,
+    "thumbJoint0": -94, "thumbJoint1": -41, "thumbJoint2": 114, "thumbSpread": -27, "thumbTwist": -6,
+    "indexJoint0": -7, "indexJoint1": 6, "indexJoint2": -33, "indexSpread": -3, "indexTwist": 13,
+    "middleJoint0": -6, "middleJoint1": 6, "middleJoint2": -39, "middleSpread": -4, "middleTwist": 1,
+    "ringJoint0": 5, "ringJoint1": -21, "ringJoint2": -10, "ringSpread": -2, "ringTwist": -14,
+    "pinkyJoint0": 10, "pinkyJoint1": -32, "pinkyJoint2": -54, "pinkySpread": -15, "pinkyTwist": -13
+  },
+  {
+    "pitch": -5, "yaw": -22, "roll": 92,
+    "thumbJoint0": -65, "thumbJoint1": -41, "thumbJoint2": 114, "thumbSpread": -27, "thumbTwist": -6,
+    "indexJoint0": -7, "indexJoint1": 6, "indexJoint2": -33, "indexSpread": -3, "indexTwist": 13,
+    "middleJoint0": -6, "middleJoint1": 6, "middleJoint2": -39, "middleSpread": -4, "middleTwist": 1,
+    "ringJoint0": 5, "ringJoint2": -10, "ringSpread": -2, "ringTwist": -14,
+    "pinkyJoint0": 35, "pinkyJoint1": -1, "pinkyJoint2": -17, "pinkySpread": -18, "pinkyTwist": -42
+  }
+]
