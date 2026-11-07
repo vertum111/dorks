@@ -1,0 +1,11 @@
+[build]
+  command = "VITE_DORKS_LAUNCH_ONLY=1 npm run build -- --outDir dist-launch && node scripts/netlify-routes.mjs"
+  publish = "dist-launch"
+
+[build.environment]
+  NODE_VERSION = "22.22.2"
+
+[[redirects]]
+  from = "/mint"
+  to = "/mint.html"
+  status = 200

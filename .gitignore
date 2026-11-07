@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+._*
+*.log
+.env
+.env.*
+contracts/found/target/
+dist/
+dist-launch/

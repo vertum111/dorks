@@ -1,0 +1,830 @@
+[
+  {
+    "name": "lose-hell-no",
+    "label": "Oh hell no · 2–4s",
+    "event": "lose",
+    "url": "https://www.myinstants.com/media/sounds/oh-hell-no-man-wtf.mp3",
+    "source": "https://www.myinstants.com/en/instant/oh-hell-no-man-wtf-28713/",
+    "start": 2,
+    "length": 2,
+    "events": [
+      "lose",
+      "rps-lose"
+    ],
+    "original_seconds": 10.403,
+    "file": "lose-hell-no.mp3",
+    "seconds": 2,
+    "excerpt_seconds": 2,
+    "sha256": "752f5d28dd0393a65671d0d9a0ee65d5fc4b90d3057ed8f6e36b51e44b75576d",
+    "peak_dbfs": -8.56
+  },
+  {
+    "name": "win-yeah-boy",
+    "label": "Yeah boy",
+    "event": "win",
+    "url": "https://www.myinstants.com/media/sounds/flava-flav-yeah-boy.mp3",
+    "source": "https://www.myinstants.com/en/instant/yeah-boy/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "win"
+    ],
+    "original_seconds": 2.273,
+    "file": "win-yeah-boy.mp3",
+    "seconds": 1.621,
+    "excerpt_seconds": 1.619819,
+    "sha256": "1d4690316cfee6a2b22e5a8ec619705e55b99d7ab0f61405c12f42bc7685dc0d",
+    "peak_dbfs": -5.72
+  },
+  {
+    "name": "win-wow",
+    "label": "Anime Wow",
+    "event": "win",
+    "url": "https://www.myinstants.com/media/sounds/anime-wow-sound-effect.mp3",
+    "source": "https://www.myinstants.com/en/instant/anime-wow/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "win",
+      "found"
+    ],
+    "original_seconds": 4.18,
+    "file": "win-wow.mp3",
+    "seconds": 3.364,
+    "excerpt_seconds": 3.364308,
+    "sha256": "f19e37bdb4d1d745c122615711c4676a45b22f8162f81c67386c9c755dde9f71",
+    "peak_dbfs": -5.32
+  },
+  {
+    "name": "lose-trombone",
+    "label": "Sad Trombone",
+    "event": "lose",
+    "url": "https://www.myinstants.com/media/sounds/sadtrombone.swf.mp3",
+    "source": "https://www.myinstants.com/en/instant/sad-trombone/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "lose",
+      "rps-lose"
+    ],
+    "original_seconds": 3.631,
+    "file": "lose-trombone.mp3",
+    "seconds": 3.092,
+    "excerpt_seconds": 3.091519,
+    "sha256": "c64aacac7ca550fe7c6acc9abf6cad0aa610726c8d72987e51ae8ea9f1e778ac",
+    "peak_dbfs": -5.39
+  },
+  {
+    "name": "lose-fart",
+    "label": "Fart Meme Sound",
+    "event": "lose",
+    "url": "https://www.myinstants.com/media/sounds/fart-meme-sound.mp3",
+    "source": "https://www.myinstants.com/en/instant/fart-meme-sound-46799/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "lose"
+    ],
+    "original_seconds": 1.927,
+    "file": "lose-fart.mp3",
+    "seconds": 1.184,
+    "excerpt_seconds": 1.184331,
+    "sha256": "0f24f6bb5496cded08e109b3ca188c8b4eeaa3b398aa0497984d4aa8b01e5fd0",
+    "peak_dbfs": -6.68
+  },
+  {
+    "name": "tie-huh",
+    "label": "Huh?",
+    "event": "tie",
+    "url": "https://www.myinstants.com/media/sounds/huh_37bAoRo.mp3",
+    "source": "https://www.myinstants.com/en/instant/asian-meme-huh-49043/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "tie"
+    ],
+    "original_seconds": 0.625,
+    "file": "tie-huh.mp3",
+    "seconds": 0.582,
+    "excerpt_seconds": 0.581746,
+    "sha256": "e2d4d75db086f9d21c1599c912817c549c1e6aa51209043b0c320a711a9037b5",
+    "peak_dbfs": -9.46
+  },
+  {
+    "name": "rps-tie-bruh",
+    "label": "Bruh",
+    "event": "rps-tie",
+    "url": "https://www.myinstants.com/media/sounds/movie_1.mp3",
+    "source": "https://www.myinstants.com/en/instant/bruh/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "tie",
+      "rps-tie"
+    ],
+    "original_seconds": 0.817,
+    "file": "rps-tie-bruh.mp3",
+    "seconds": 0.494,
+    "excerpt_seconds": 0.493991,
+    "sha256": "2345020252ee2aa467bff4839b97a2a07940bc351b0670c7bccabdf974ce3234",
+    "peak_dbfs": -10.74
+  },
+  {
+    "name": "rps-start-fight",
+    "label": "Fight!",
+    "event": "rps-start",
+    "url": "https://www.myinstants.com/media/sounds/mortal-kombat-fight.mp3",
+    "source": "https://www.myinstants.com/en/instant/mortal-kombat-fight-38806/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "rps-start"
+    ],
+    "original_seconds": 3.043,
+    "file": "rps-start-fight.mp3",
+    "seconds": 2.515,
+    "excerpt_seconds": 2.515442,
+    "sha256": "4e678a906002dd893e39e1065d9a17ab1e03344b812214899847e44035e11b90",
+    "peak_dbfs": -3.96
+  },
+  {
+    "name": "rps-reveal-boom",
+    "label": "Vine Boom",
+    "event": "rps-reveal",
+    "url": "https://www.myinstants.com/media/sounds/vine-boom.mp3",
+    "source": "https://www.myinstants.com/en/instant/vine-boom-sound-70972/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "rps-reveal"
+    ],
+    "original_seconds": 1.255,
+    "file": "rps-reveal-boom.mp3",
+    "seconds": 1.125,
+    "excerpt_seconds": 1.124694,
+    "sha256": "277590f4800d3c40259ed7b4ecab85ecd54a727a23f6d8168f703568f6115717",
+    "peak_dbfs": -8.01
+  },
+  {
+    "name": "rps-win-noice",
+    "label": "Noice",
+    "event": "rps-win",
+    "url": "https://www.myinstants.com/media/sounds/-click-nice_3.mp3",
+    "source": "https://www.myinstants.com/en/instant/michael-rosen-noice/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "rps-win",
+      "found"
+    ],
+    "original_seconds": 2.429,
+    "file": "rps-win-noice.mp3",
+    "seconds": 1.443,
+    "excerpt_seconds": 1.443379,
+    "sha256": "171ee11568cc184ef08ca5adc318c8fdfa69c97af119124def11e0b1dc1f3e55",
+    "peak_dbfs": -3.27
+  },
+  {
+    "name": "rps-lose-damage",
+    "label": "Emotional Damage",
+    "event": "rps-lose",
+    "url": "https://www.myinstants.com/media/sounds/emotional-damage-meme.mp3",
+    "source": "https://www.myinstants.com/en/instant/emotional-damage-meme-74555/",
+    "start": 0,
+    "length": null,
+    "events": [
+      "rps-lose"
+    ],
+    "original_seconds": 3.32,
+    "file": "rps-lose-damage.mp3",
+    "seconds": 3.208,
+    "excerpt_seconds": 3.208209,
+    "sha256": "3a5dc152323da40698c6b8d306ea3f11a156207b297e220694b5e39f08881198",
+    "peak_dbfs": -7.47
+  },
+  {
+    "name": "woo-baby",
+    "label": "Woo, Yeah Baby!",
+    "event": "win",
+    "events": [
+      "win",
+      "found"
+    ],
+    "source": "https://www.myinstants.com/en/instant/woo-yeah-baby-75627/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 7.198,
+    "file": "woo-baby.mp3",
+    "seconds": 4.651,
+    "excerpt_seconds": 4.65,
+    "sha256": "2eb7c093f1342c5f01b2b7d913f117cf90762784159965ea039498499c21f016",
+    "peak_dbfs": -12.61
+  },
+  {
+    "name": "vector-yeah",
+    "label": "Vector Oh yeah",
+    "event": "win",
+    "events": [
+      "win",
+      "found"
+    ],
+    "source": "https://www.myinstants.com/en/instant/vector-oh-yeah-59735/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.008,
+    "file": "vector-yeah.mp3",
+    "seconds": 0.988,
+    "excerpt_seconds": 0.987937,
+    "sha256": "1193d342644d201c86c134bd09fa8adf15dfc3fcd23c266518d85c9af7767584",
+    "peak_dbfs": -9.12
+  },
+  {
+    "name": "yeah-buddy",
+    "label": "Yeah buddy lightweight",
+    "event": "win",
+    "events": [
+      "win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/yeah-buddy-lightweight-55964/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 3.768,
+    "file": "yeah-buddy.mp3",
+    "seconds": 3.538,
+    "excerpt_seconds": 3.537528,
+    "sha256": "5a0f38a3f7a2f2aa67d1d938bc8c97b645c0e3ce55a11db500c6f8cd544ffb97",
+    "peak_dbfs": -6.26
+  },
+  {
+    "name": "spongebob-fail",
+    "label": "SpongeBob Fail",
+    "event": "lose",
+    "events": [
+      "lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/spongebob-fail-11236/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 3.384,
+    "file": "spongebob-fail.mp3",
+    "seconds": 3.299,
+    "excerpt_seconds": 3.299252,
+    "sha256": "a915ab4aa53a88daa1b5760390bd95ddcc840ace96545a90aa00b145a6929fa2",
+    "peak_dbfs": -5.32
+  },
+  {
+    "name": "wait-wait",
+    "label": "No no Wait Wait!",
+    "event": "lose",
+    "events": [
+      "lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/no-no-wait-wait-15822/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 5.433,
+    "file": "wait-wait.mp3",
+    "seconds": 4.651,
+    "excerpt_seconds": 4.65,
+    "sha256": "d2588e509e42c894154a60a6430cbf9fbfe04097526fc0627da1a478ca5ce742",
+    "peak_dbfs": -5.1
+  },
+  {
+    "name": "poke",
+    "label": "cartoon poke",
+    "event": "throw",
+    "events": [
+      "throw",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/cartoon-poke-25819/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 3.065,
+    "file": "poke.mp3",
+    "seconds": 0.224,
+    "excerpt_seconds": 0.224082,
+    "sha256": "b73e3afef7a7fbaea5cb9da49bf6f1d60a01edda68025ad8cfbc453af117b3ff",
+    "peak_dbfs": -7.95
+  },
+  {
+    "name": "swish",
+    "label": "Fast Swish",
+    "event": "throw",
+    "events": [
+      "throw",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/fast-swish-10812/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.985,
+    "file": "swish.mp3",
+    "seconds": 0.197,
+    "excerpt_seconds": 0.19678,
+    "sha256": "ad04886a0d694281a3ec9c166a5e929ddf67c693045de569819c9a6d2bea2203",
+    "peak_dbfs": -5.43
+  },
+  {
+    "name": "slip",
+    "label": "Cartoon Slip",
+    "event": "throw",
+    "events": [
+      "throw",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/cartoon-slip-89839/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 0.198,
+    "file": "slip.mp3",
+    "seconds": 0.17,
+    "excerpt_seconds": 0.170499,
+    "sha256": "f5a0adc15df93bc37dd9eaf285082e9fc498f269c957c4323074c0e8f076e9e0",
+    "peak_dbfs": -4.18
+  },
+  {
+    "name": "bite",
+    "label": "Cartoon Bite",
+    "event": "throw",
+    "events": [
+      "throw",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/cartoon-bite-38109/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.017,
+    "file": "bite.mp3",
+    "seconds": 0.216,
+    "excerpt_seconds": 0.216417,
+    "sha256": "376f5251ee2ddaa6e218de0efecae9cb89b0e241437bc0fd494f745d6374a458",
+    "peak_dbfs": -4.52
+  },
+  {
+    "name": "luigi-yahoo",
+    "label": "Luigi - Yahoo",
+    "event": "throw",
+    "events": [
+      "throw",
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/luigi-yahoo-18768/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.248,
+    "file": "luigi-yahoo.mp3",
+    "seconds": 1.587,
+    "excerpt_seconds": 1.586508,
+    "sha256": "6636123a781ba9025c36b7870000331eb5b999c031f450c577c6f28f2d56e405",
+    "peak_dbfs": -6.96
+  },
+  {
+    "name": "yeet-one",
+    "label": "Yeet 1",
+    "event": "throw",
+    "events": [
+      "throw"
+    ],
+    "source": "https://www.myinstants.com/en/instant/yeet-1-88596/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 0.615,
+    "file": "yeet-one.mp3",
+    "seconds": 0.568,
+    "excerpt_seconds": 0.567596,
+    "sha256": "c7d125f574fb144823ff60380d1ec5bda9af82a4438eb3d11f8d9189b39f6832",
+    "peak_dbfs": -12.79
+  },
+  {
+    "name": "metal-alert",
+    "label": "metal gear alert sound effect",
+    "event": "tie",
+    "events": [
+      "tie",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/metal-gear-alert-sound-effect-82026/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.934,
+    "file": "metal-alert.mp3",
+    "seconds": 1.035,
+    "excerpt_seconds": 1.035374,
+    "sha256": "321e9cb147c6821b19afdb7d5102956e2aed5d1d68899cca067fba166850102d",
+    "peak_dbfs": -5.35
+  },
+  {
+    "name": "huh-ceeday",
+    "label": "Huh? Ceeday",
+    "event": "tie",
+    "events": [
+      "tie",
+      "rps-tie"
+    ],
+    "source": "https://www.myinstants.com/en/instant/huh-ceeday-65118/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.161,
+    "file": "huh-ceeday.mp3",
+    "seconds": 0.341,
+    "excerpt_seconds": 0.340227,
+    "sha256": "fc44c482394f74e28d90f3e51c594a404e57f88f0401e13f6d1cd3a367b1c083",
+    "peak_dbfs": -4.47
+  },
+  {
+    "name": "wow-guy",
+    "label": "Wow Guy",
+    "event": "tie",
+    "events": [
+      "tie",
+      "found"
+    ],
+    "source": "https://www.myinstants.com/en/instant/wow-guy/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 0.667,
+    "file": "wow-guy.mp3",
+    "seconds": 0.647,
+    "excerpt_seconds": 0.646689,
+    "sha256": "48a7c71ae3d068b616589537b9f2769b8fc844ea192e228ff6869b7c817ea4e7",
+    "peak_dbfs": -8.04
+  },
+  {
+    "name": "round-one",
+    "label": "Round One Fight",
+    "event": "rps-start",
+    "events": [
+      "rps-start"
+    ],
+    "source": "https://www.myinstants.com/en/instant/round-one-fight/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 3.504,
+    "file": "round-one.mp3",
+    "seconds": 2.802,
+    "excerpt_seconds": 2.802313,
+    "sha256": "3a6ed432a4f5e11ae18b0248a1b7c572228ea86c689e843a10b6265ba73dc33f",
+    "peak_dbfs": -4.7
+  },
+  {
+    "name": "round-two",
+    "label": "Mortal Kombat - Round Two",
+    "event": "rps-start",
+    "events": [
+      "rps-start"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mortal-kombat-round-two/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 5.069,
+    "file": "round-two.mp3",
+    "seconds": 3.787,
+    "excerpt_seconds": 3.786553,
+    "sha256": "cb3cc8916f8d9b0e89858f021272799ae7d99e94498bff1a16df94cf40edb6c9",
+    "peak_dbfs": -4.11
+  },
+  {
+    "name": "sf-round-one",
+    "label": "Street fighter round 1",
+    "event": "rps-start",
+    "events": [
+      "rps-start"
+    ],
+    "source": "https://www.myinstants.com/en/instant/street-fighter-round-1-79250/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.319,
+    "file": "sf-round-one.mp3",
+    "seconds": 2.081,
+    "excerpt_seconds": 2.081429,
+    "sha256": "06e9dae3ace4d4628dc1033d7643c35fdd39b2e5b9f571b1c0913e01677478cc",
+    "peak_dbfs": -4.82
+  },
+  {
+    "name": "round-two-gong",
+    "label": "MK Round 2 Fight Gong",
+    "event": "rps-start",
+    "events": [
+      "rps-start"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mk-round-2-fight-gong-7996/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 6.408,
+    "file": "round-two-gong.mp3",
+    "seconds": 4.651,
+    "excerpt_seconds": 4.65,
+    "sha256": "29b1808e33986a3b1e8e8c04c6c07e4b3a25326553d126cfe1ae572eda14aea8",
+    "peak_dbfs": -4.63
+  },
+  {
+    "name": "sf-coin",
+    "label": "Street Fighter II Coin",
+    "event": "rps-start",
+    "events": [
+      "rps-start",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/street-fighter-ii-coin/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.115,
+    "file": "sf-coin.mp3",
+    "seconds": 0.953,
+    "excerpt_seconds": 0.953039,
+    "sha256": "04093da784634fc8e378641d84192bd77d8a199f8437ebb7ceb25669bd52cd27",
+    "peak_dbfs": -7.72
+  },
+  {
+    "name": "hadouken",
+    "label": "Haduken Street Fighter",
+    "event": "rps-start",
+    "events": [
+      "rps-start"
+    ],
+    "source": "https://www.myinstants.com/en/instant/haduken-street-fighter-26453/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.071,
+    "file": "hadouken.mp3",
+    "seconds": 0.872,
+    "excerpt_seconds": 0.871701,
+    "sha256": "ff651aa0ce3bfc0466c4e2a9f494b72f7cefc1b7631d08b4d984d5abed5fda2c",
+    "peak_dbfs": -11.48
+  },
+  {
+    "name": "shinchan",
+    "label": "Shinchan Sound Effect",
+    "event": "rps-start",
+    "events": [
+      "rps-start",
+      "rps-reveal"
+    ],
+    "source": "https://www.myinstants.com/en/instant/shinchan-sound-effect-79384/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 4.597,
+    "file": "shinchan.mp3",
+    "seconds": 4.309,
+    "excerpt_seconds": 4.30873,
+    "sha256": "fd63b76f680736eee56b38525b4ddc785b52b73a1f9160c7bfe6550597644017",
+    "peak_dbfs": -4.34
+  },
+  {
+    "name": "flawless",
+    "label": "Flawless Victory (MK X)",
+    "event": "rps-win",
+    "events": [
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/flawless-victory-mk-x-3194/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.772,
+    "file": "flawless.mp3",
+    "seconds": 1.673,
+    "excerpt_seconds": 1.672721,
+    "sha256": "2a878843a36579e9fedc883d66bb116288c020a32f684ee35e35df280eb2b0d0",
+    "peak_dbfs": -4.8
+  },
+  {
+    "name": "mario-wins",
+    "label": "Mario Wins!",
+    "event": "rps-win",
+    "events": [
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mario-wins/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 8.385,
+    "file": "mario-wins.mp3",
+    "seconds": 4.651,
+    "excerpt_seconds": 4.65,
+    "sha256": "d3e939ce227c2a91b6fe724208ba7d8102ef0e2b54d41e32202e432ac406a314",
+    "peak_dbfs": -4.92
+  },
+  {
+    "name": "happy-wheels",
+    "label": "Happy Wheels Victory",
+    "event": "rps-win",
+    "events": [
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/happy-wheels-victory-69803/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 5.381,
+    "file": "happy-wheels.mp3",
+    "seconds": 3.174,
+    "excerpt_seconds": 3.173605,
+    "sha256": "57555e58285791acfb9eea6e96fa247fd84968b2e1235b31bfe833aa84b89cc4",
+    "peak_dbfs": -6.47
+  },
+  {
+    "name": "mario-yippee",
+    "label": "Mario - Yippee! A-haha!",
+    "event": "rps-win",
+    "events": [
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mario-yippee-a-haha-99481/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.758,
+    "file": "mario-yippee.mp3",
+    "seconds": 2.236,
+    "excerpt_seconds": 2.23619,
+    "sha256": "a33f0ee42b5d2f8bc09a344ddb54db6ae65ec406a370c6f16894c7cce8ce14dd",
+    "peak_dbfs": -10.69
+  },
+  {
+    "name": "luigi-bingo",
+    "label": "Luigi - Bingo Ho Ho Ho Ho",
+    "event": "rps-win",
+    "events": [
+      "rps-win"
+    ],
+    "source": "https://www.myinstants.com/en/instant/luigi-bingo-ho-ho-ho-ho-74378/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.891,
+    "file": "luigi-bingo.mp3",
+    "seconds": 2.26,
+    "excerpt_seconds": 2.259819,
+    "sha256": "796e6d6b5e9063e3f65a29b6149cbd043c3d01719c2d3944789f1b1c60ff915b",
+    "peak_dbfs": -4.3
+  },
+  {
+    "name": "mario-congrats",
+    "label": "Mario - Congratulations!",
+    "event": "rps-win",
+    "events": [
+      "rps-win",
+      "found"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mario-congratulations-53977/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.326,
+    "file": "mario-congrats.mp3",
+    "seconds": 1.706,
+    "excerpt_seconds": 1.706327,
+    "sha256": "59a577a9213c5a09190e2848fc773287b28cab3b34e05ef4c84a25517b5155ab",
+    "peak_dbfs": -8.91
+  },
+  {
+    "name": "mario-ohno",
+    "label": "Mario - Ohhh Nooo!",
+    "event": "rps-lose",
+    "events": [
+      "rps-lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/mario-ohhh-nooo-24097/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.751,
+    "file": "mario-ohno.mp3",
+    "seconds": 2.163,
+    "excerpt_seconds": 2.163016,
+    "sha256": "0405376cb55d81b1dd2bdb30c81e1336321000e389fc781144d7a6549d2f9777",
+    "peak_dbfs": -10.45
+  },
+  {
+    "name": "sf-ko",
+    "label": "Street Fighter K.O",
+    "event": "rps-lose",
+    "events": [
+      "rps-lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/street-fighter-k-o-97268/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 5.695,
+    "file": "sf-ko.mp3",
+    "seconds": 4.283,
+    "excerpt_seconds": 4.283401,
+    "sha256": "28a63837e35352c0fc61fbc883a7e32b4af70d98ecaa4a6b95536d54a34e8dd0",
+    "peak_dbfs": -10.47
+  },
+  {
+    "name": "fail-horns",
+    "label": "Fail horns cartoony",
+    "event": "rps-lose",
+    "events": [
+      "rps-lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/fail-horns-cartoony-19733/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 4.76,
+    "file": "fail-horns.mp3",
+    "seconds": 4.243,
+    "excerpt_seconds": 4.243492,
+    "sha256": "0c183059e4dd440a0f2221c224844fd6f265e98261804d7374c71190ca884b6f",
+    "peak_dbfs": -10.26
+  },
+  {
+    "name": "no-laugh",
+    "label": "oh no no no laugh",
+    "event": "rps-lose",
+    "events": [
+      "rps-lose"
+    ],
+    "source": "https://www.myinstants.com/en/instant/oh-no-no-no-laugh-56694/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 10.893,
+    "file": "no-laugh.mp3",
+    "seconds": 4.651,
+    "excerpt_seconds": 4.65,
+    "sha256": "4d969439a020901b8df1634e33186a75ee3916ce250c2f64595cb7b284faa06f",
+    "peak_dbfs": -5.51
+  },
+  {
+    "name": "huh-plain",
+    "label": "huh sound",
+    "event": "rps-tie",
+    "events": [
+      "rps-tie"
+    ],
+    "source": "https://www.myinstants.com/en/instant/huh-sound-60515/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 1.091,
+    "file": "huh-plain.mp3",
+    "seconds": 0.323,
+    "excerpt_seconds": 0.322698,
+    "sha256": "abe98502a0ab86be1c6681494bd20ae687933c2e59415fbe221b6881c0028032",
+    "peak_dbfs": -4.38
+  },
+  {
+    "name": "cat-huh",
+    "label": "Cat saying Huh!",
+    "event": "rps-tie",
+    "events": [
+      "rps-tie"
+    ],
+    "source": "https://www.myinstants.com/en/instant/cat-saying-huh-36994/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.048,
+    "file": "cat-huh.mp3",
+    "seconds": 0.339,
+    "excerpt_seconds": 0.339456,
+    "sha256": "a2cb0b31913910737068af8b3b2b28aaa86f965994d4b7e8a467dc0469fc943f",
+    "peak_dbfs": -4.47
+  },
+  {
+    "name": "huh-ehhh",
+    "label": "\"Ehhh...?\"(Cute Anime Voice)~MagicalMysticVA",
+    "event": "rps-tie",
+    "events": [
+      "rps-tie"
+    ],
+    "source": "https://www.myinstants.com/en/instant/ehhh-cute-anime-voice-magicalmysticva-50741/",
+    "url": null,
+    "start": 0,
+    "length": null,
+    "original_seconds": 2.417,
+    "file": "huh-ehhh.mp3",
+    "seconds": 1.349,
+    "excerpt_seconds": 1.348821,
+    "sha256": "e250113b52f45158a979e1ef8309209447a1435567302be72422632ae0e15f81",
+    "peak_dbfs": -7.53
+  }
+]

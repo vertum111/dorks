@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: dorks-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: node server.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.2
+      - key: NEAR_NETWORK
+        value: testnet
+      - key: DORKS_SITE_ORIGIN
+        sync: false
+      - key: FOUND_CONTRACT_ID
+        sync: false
+      - key: FOUND_SPONSOR_ID
+        sync: false
+      - key: FOUND_SPONSOR_KEY
+        sync: false
+      - key: FOUND_CHALLENGE_SECRET
+        generateValue: true

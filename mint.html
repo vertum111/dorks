@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#f7f1e4">
+ <title>Found Caps · DORKS</title>
+</head>
+<body class="mint-page">
+ <header class="mint-nav">
+  <a href="/" aria-label="DORKS home"><img src="/brand/dorks-wordmark.svg" alt="DORKS"></a>
+  <a class="paper-button" href="/" id="mint-back">Back to game</a>
+ </header>
+ <main class="mint-layout">
+  <div class="mint-art" aria-label="Three examples from the Found collection">
+   <img src="/art/found/8-front.png" alt="Found Spud">
+   <img src="/art/found/1-front.png" alt="Found Ember">
+   <img src="/art/found/28-front.png" alt="Found Pixel">
+  </div>
+  <section class="mint-card" aria-labelledby="mint-title">
+   <p class="eyebrow">THE FOUND DROP</p>
+   <h1 id="mint-title">Found Caps</h1>
+   <p>Scuffed, scratched, still good for a game. Grab one random cap and bring it to the table.</p>
+   <p class="mint-facts"><span>0 NEAR</span><span>One claim per account</span><span id="mint-supply">1,024 caps</span></p>
+   <div id="mint-countdown" hidden>
+    <p>Free mint opens <time id="mint-opens"></time></p>
+    <p id="mint-clock" role="timer" aria-live="off"></p>
+   </div>
+   <p id="mint-network"></p>
+   <button class="primary" id="mint-action" disabled>Checking drop…</button>
+   <button class="text-button" id="mint-disconnect" hidden>Disconnect wallet</button>
+   <p id="mint-status" role="status" aria-live="polite">Checking the Found drop.</p>
+   <section id="mint-inventory" aria-label="Your Found Caps" hidden></section>
+   <section id="friend-caps" hidden>
+    <h2>Pass a cap to a friend</h2>
+    <p>Look up your friend's NEAR account and request a cap. The owner can approve or decline.</p>
+    <form id="friend-lookup">
+     <label for="friend-account">Friend's NEAR account</label>
+     <input id="friend-account" required minlength="2" maxlength="64" placeholder="friend.testnet" spellcheck="false" autocapitalize="none">
+     <button class="paper-button">Find caps</button>
+    </form>
+    <button class="text-button" id="refresh-requests" type="button">Refresh requests</button>
+    <p id="friend-status" role="status"></p>
+    <div id="friend-inventory"></div>
+   </section>
+  </section>
+ </main>
+ <script type="module" src="/src/mint.js"></script>
+</body>
+</html>

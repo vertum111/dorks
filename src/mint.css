@@ -1,0 +1,33 @@
+.mint-page { min-height: 100vh; overflow: auto; }
+.mint-nav, .mint-layout { width: min(1050px, calc(100% - 36px)); margin: auto; }
+.mint-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 0; }
+.mint-nav img { display:block; width: min(140px, 32vw); }
+.mint-layout { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:32px; padding: min(8vh,72px) 0 32px; }
+.mint-art { display:flex; align-items:center; justify-content:center; isolation:isolate; }
+.mint-art img { width:32%; aspect-ratio:1; border-radius:50%; border:1px solid #655d4d; box-shadow:0 6px 0 #d5c9b2; }
+.mint-art img:nth-child(2) { width:49%; margin:0 -6%; z-index:1; transform:rotate(-8deg); }
+.mint-card { padding:clamp(20px,4vw,42px); background:#fffaf0; border:2px solid #35322c; border-radius:20px 15px 18px 13px; box-shadow:5px 6px #35322c; }
+.mint-card h1 { margin:0; font-size:clamp(40px,7vw,72px); line-height:1; }
+.mint-card p { line-height:1.4; }
+.mint-facts { display:flex; gap:8px 14px; flex-wrap:wrap; font-weight:bold; }
+#mint-network { overflow-wrap:anywhere; }
+#mint-status { min-height:2.8em; }
+#mint-inventory article { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-top:12px; }
+#mint-inventory img { border-radius:50%; }
+.mint-page a.paper-button { display:inline-flex; align-items:center; text-decoration:none; }
+@media (max-width:720px) {
+ .mint-layout { grid-template-columns:1fr; gap:25px; padding-top:10px; }
+ .mint-art { width:min(100%, 350px); margin:auto; }
+}
+.mint-page a.paper-button { color:var(--ink); }
+.mint-card > p:not(.eyebrow), #mint-inventory { font-family:Pangolin,cursive; }
+#friend-caps { border-top: 1px solid var(--ink); margin-top: 18px; padding-top: 12px; }
+#friend-caps p, #friend-caps label, #friend-caps input { font-family: Pangolin, cursive; }
+#friend-caps label { display: block; }
+#friend-account { padding: 8px; width: min(100%, 230px); margin: 6px 4px 6px 0; }
+#friend-inventory article { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.mint-page [hidden] { display: none !important; }
+#mint-countdown { padding: 10px 14px; border: 1px dashed var(--ink); border-radius: 10px; margin: 16px 0; }
+#mint-countdown p { margin: 2px 0; }
+#mint-opens { font-weight: bold; }
+#mint-clock { font-size: clamp(22px, 4vw, 36px); font-variant-numeric: tabular-nums; }

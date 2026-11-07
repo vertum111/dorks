@@ -1,0 +1,10 @@
+Source: immersive-web/webxr-input-profiles
+https://github.com/immersive-web/webxr-input-profiles/tree/main/packages/assets/profiles/generic-hand
+Downloaded 2026-11-03. Original right.glb and left.glb are unmodified.
+License: MIT, Copyright (c) 2019 Amazon. Full text: LICENSE.md.
+
+Game uses right.glb: a skinned hand with 25 joint nodes.
+At runtime the flat tracked-joint skeleton is reparented into finger chains,
+preserving its bind pose. Thumb and index are posed using inverse kinematics.
+Thumb/index IK uses an analytic bend plane and a fixed distal approach direction.
+Other fingers stay relaxed above the table through their real joints. Geometry is not procedural.

@@ -1,0 +1,1 @@
+export const FOUND_OPENS_AT = '2026-11-09T19:00:00+02:00';
