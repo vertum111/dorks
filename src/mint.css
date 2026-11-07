@@ -1,6 +1,7 @@
 .mint-page { min-height: 100vh; overflow: auto; }
 .mint-nav, .mint-layout { width: min(1050px, calc(100% - 36px)); margin: auto; }
 .mint-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:20px 0; }
+.mint-nav-links { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; }
 .mint-nav img { display:block; width: min(140px, 32vw); }
 .mint-layout { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:32px; padding: min(8vh,72px) 0 32px; }
 .mint-art { display:flex; align-items:center; justify-content:center; isolation:isolate; }
