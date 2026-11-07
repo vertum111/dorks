@@ -123,17 +123,22 @@ export function foundApi(config = process.env) {
    try {
     const access = await rpc.viewAccessKey({accountId, publicKey, finalityQuery:{finality:'final'}});
     if (access.permission !== 'FullAccess') return send(403, {error:'Use a full-access wallet key.'});
-    let tokenId = await view('claim_status', {account_id:accountId});
-    if (!tokenId) {
-     if (await view('remaining') === 0) return send(409, {error:'All Found Caps have been claimed.'});
+    let tokenIds = await view('claim_status', {account_id:accountId});
+    if (!Array.isArray(tokenIds)) return send(503, {error:'The Found contract needs an update.'});
+    if (tokenIds.length < 3 && await view('remaining') > 0) {
      await sponsor.callFunction({
       contractId, methodName:'claim', args:{receiver_id:accountId},
-      gas:teraToGas('35'), deposit:0n, waitUntil:'FINAL',
+      gas:teraToGas('100'), deposit:0n, waitUntil:'FINAL',
      });
-     tokenId = await view('claim_status', {account_id:accountId});
+     tokenIds = await view('claim_status', {account_id:accountId});
     }
-    if (!tokenPattern.test(tokenId ?? '')) return send(503, {error:'Waiting for NEAR confirmation. Retry to check your cap.'});
-    return send(200, {tokenId, tokens:await inventory(accountId)});
+    if (!tokenIds.length && await view('remaining') === 0) {
+     return send(409, {error:'All Found Caps have been claimed.'});
+    }
+    if (!tokenIds.length || tokenIds.some(id => !tokenPattern.test(id))) {
+     return send(503, {error:'Waiting for NEAR confirmation. Retry to check your caps.'});
+    }
+    return send(200, {tokenIds, tokens:await inventory(accountId)});
    } finally {
     minting = false;
    }

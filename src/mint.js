@@ -190,7 +190,7 @@ function render() {
   action.disabled = true;
   return;
  }
- action.textContent = accountId ? 'Claim a Found Cap' : 'Connect NEAR wallet';
+ action.textContent = accountId ? 'Claim Found Caps' : 'Connect NEAR wallet';
  action.disabled = !drop?.contractId || (Boolean(accountId) && (!drop.enabled || drop.remaining === 0));
  if (action.disabled) action.textContent = drop?.remaining === 0 ? 'Sold out' : 'Drop not open';
  disconnect.hidden = !accountId;
@@ -230,12 +230,13 @@ action.addEventListener('click', async () => {
   });
   if (proof?.accountId !== accountId) throw new Error('Sign with the connected NEAR account.');
   status.textContent = 'Waiting for NEAR confirmation…';
-  const {tokens, tokenId} = await request('claim', {...challenge, ...proof, accountId});
+  const {tokens, tokenIds} = await request('claim', {...challenge, ...proof, accountId});
   showTokens(tokens);
   await loadTransfers();
-  status.textContent = tokens.some(token => token.token_id === tokenId)
-   ? 'Your Found Cap is ready to play.'
-   : 'This account already claimed a Found Cap. It has since been transferred.';
+  const owned = tokens.filter(token => tokenIds.includes(token.token_id)).length;
+  status.textContent = owned
+   ? `${owned} of your claimed Found Caps ready to play.`
+   : 'Your claimed Found Caps have been transferred.';
   drop = await request('status');
   document.querySelector('#mint-supply').textContent = `${drop.remaining.toLocaleString()} left`;
  } catch (error) {

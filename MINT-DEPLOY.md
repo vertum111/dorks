@@ -1,6 +1,6 @@
 # DORKS Found mint
 
-The site claims a random Found Cap at 0 NEAR for the player. The wallet signs a NEP-413 message. The Node service checks the signature and the wallet's full-access public key, then calls the NEAR contract with the project sponsor key. The contract has a fixed supply of 1,024 and records one claim per account. The claim page reads current ownership from NEAR and **Use in game** selects the corresponding in-game design. The existing guest game remains open to guests.
+The site claims up to three random Found Caps at 0 NEAR for the player. The wallet signs a NEP-413 message. The Node service checks the signature and the wallet's full-access public key, then calls the NEAR contract with the project sponsor key. The contract has a fixed supply of 1,024 and records up to three minted caps per account. The claim page reads current ownership from NEAR and **Use in game** selects the corresponding in-game design. The existing guest game remains open to guests.
 
 ## Local preview
 
@@ -21,9 +21,9 @@ With Node 22.22.2 or later, run `npm ci`, `npm run build`, then `node server.mjs
 2. Deploy the Wasm to the contract account and call `new` as that same account with `sponsor_id` and `media_base_url`. Use a stable HTTPS origin that serves the published `/art/found/` files, without a trailing slash. Keep the art at those URLs after launch. NFTs point to their PNGs and the game renders the matching 3D models.
 3. On the sponsor account, provision a function-call access key restricted to the contract's `claim` method, with a limited gas allowance. The sponsor needs spendable gas. The contract account separately needs funds for code and token storage. The claim call attaches 0 NEAR.
 4. On Render set `NEAR_NETWORK=testnet`, `FOUND_CONTRACT_ID`, `FOUND_SPONSOR_ID`, `FOUND_SPONSOR_KEY`, and a random `FOUND_CHALLENGE_SECRET` of at least 32 characters. Render can generate the challenge secret from its blueprint. Keep both secrets server-side. `NEAR_RPC_URL` is optional.
-5. Open the hosted claim page with a compatible testnet wallet, claim, check the token in the wallet, and try **Use in game**. Repeat with the same account and check that the remaining count drops only once. Transfer the token and verify the new owner's inventory. Record storage use and gas before sizing the mainnet funding.
+5. Open the hosted claim page with a compatible testnet wallet, claim, check the three tokens in the wallet, and try **Use in game**. Repeat with the same account and check that the remaining count drops by three on the first claim and stays the same on retry. Transfer the token and verify the new owner's inventory. Record storage use and gas before sizing the mainnet funding.
 
-The endpoint accepts Ed25519 full-access message signatures. The contract enforces one claim per NEAR account, so multiple accounts controlled by one person can claim separately. The current API serializes sponsored transactions in one process. Before opening an unrestricted public drop, choose a per-person distribution policy if needed and set a finite sponsor-key allowance.
+The endpoint accepts Ed25519 full-access message signatures. The contract enforces a lifetime limit of three minted caps per NEAR account, so multiple accounts controlled by one person can claim separately. The current API serializes sponsored transactions in one process. Before opening an unrestricted public drop, choose a per-person distribution policy if needed and set a finite sponsor-key allowance.
 
 ## Friend transfers
 

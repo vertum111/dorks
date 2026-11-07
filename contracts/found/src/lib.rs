@@ -16,6 +16,7 @@ const DESIGNS: [&str; 32] = [
     "Void",
 ];
 const SUPPLY: u32 = 1024;
+const CAPS_PER_CLAIM: u32 = 3;
 
 #[derive(BorshStorageKey, near_sdk::borsh::BorshSerialize)]
 #[borsh(crate = "near_sdk::borsh")]
@@ -25,8 +26,9 @@ enum StorageKey {
     TokenMetadata,
     Enumeration,
     Approvals,
-    Claims,
+    LegacyClaims,
     Slots,
+    ClaimBatches,
 }
 
 #[near(contract_state)]
@@ -35,7 +37,7 @@ pub struct Contract {
     tokens: NonFungibleToken,
     metadata: LazyOption<NFTContractMetadata>,
     sponsor_id: AccountId,
-    claims: LookupMap<AccountId, TokenId>,
+    claims: LookupMap<AccountId, Vec<TokenId>>,
     slots: LookupMap<u32, u32>,
     minted: u32,
 }
@@ -73,33 +75,49 @@ impl Contract {
                 }),
             ),
             sponsor_id,
-            claims: LookupMap::new(StorageKey::Claims),
+            claims: LookupMap::new(StorageKey::ClaimBatches),
             slots: LookupMap::new(StorageKey::Slots),
             minted: 0,
         }
     }
 
-    pub fn claim_status(&self, account_id: AccountId) -> Option<TokenId> {
-        self.claims.get(&account_id)
+    pub fn claim_status(&self, account_id: AccountId) -> Vec<TokenId> {
+        if let Some(batch) = self.claims.get(&account_id) {
+            return batch;
+        }
+        let legacy: LookupMap<AccountId, TokenId> = LookupMap::new(StorageKey::LegacyClaims);
+        legacy.get(&account_id).into_iter().collect()
     }
 
     pub fn remaining(&self) -> u32 {
         SUPPLY - self.minted
     }
 
-    pub fn claim(&mut self, receiver_id: AccountId) -> TokenId {
+    pub fn claim(&mut self, receiver_id: AccountId) -> Vec<TokenId> {
         require!(
             env::predecessor_account_id() == self.sponsor_id,
             "Only the DORKS sponsor can mint"
         );
-        if let Some(existing) = self.claims.get(&receiver_id) {
-            return existing;
+        let mut batch = self.claim_status(receiver_id.clone());
+        let unclaimed = CAPS_PER_CLAIM.saturating_sub(batch.len() as u32);
+        let count = unclaimed.min(self.remaining());
+        require!(count > 0 || !batch.is_empty(), "All Found caps have been claimed");
+        if count == 0 {
+            return batch;
         }
-        let remaining = self.remaining();
-        require!(remaining > 0, "All Found caps have been claimed");
 
-        // Draw without replacement from a pool of 32 copies of each design.
-        let seed = env::random_seed_array();
+        let mut seed = env::random_seed_array();
+        for _ in 0..count {
+            batch.push(self.draw_cap(&receiver_id, &seed));
+            seed = env::sha256_array(&seed);
+        }
+        self.claims.insert(&receiver_id, &batch);
+        batch
+    }
+
+    // Draw without replacement from a pool of 32 copies of each design.
+    fn draw_cap(&mut self, receiver_id: &AccountId, seed: &[u8; 32]) -> TokenId {
+        let remaining = self.remaining();
         let index =
             (u64::from_le_bytes(seed[..8].try_into().unwrap()) % u64::from(remaining)) as u32;
         let last = remaining - 1;
@@ -132,7 +150,6 @@ impl Contract {
             memo: None,
         }
         .emit();
-        self.claims.insert(&receiver_id, &token_id);
         self.minted += 1;
         token_id
     }
