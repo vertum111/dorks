@@ -15,11 +15,23 @@
   </nav>
  </header>
  <main class="mint-layout">
-  <div class="mint-art" aria-label="Three examples from the Found collection">
-   <img src="/art/found/8-front.png" alt="Found Spud">
-   <img src="/art/found/1-front.png" alt="Found Ember">
-   <img src="/art/found/28-front.png" alt="Found Pixel">
-  </div>
+  <section class="mint-art" aria-label="Found Caps preview">
+   <div class="mint-cap-stage">
+    <img class="mint-cap-fallback" src="/art/found/1-front.png" alt="Front of Found Ember">
+   </div>
+   <div class="mint-cap-caption">
+    <strong id="mint-cap-name">Found Ember</strong>
+    <span id="mint-cap-hint" hidden>Drag to spin</span>
+   </div>
+   <div class="mint-cap-controls" hidden>
+    <div class="mint-cap-picks" role="group" aria-label="Choose a cap to preview">
+     <button type="button" data-cap="1" aria-label="Found Ember" aria-pressed="true"><img src="/art/found/1-front.png" alt=""></button>
+     <button type="button" data-cap="8" aria-label="Found Spud" aria-pressed="false"><img src="/art/found/8-front.png" alt=""></button>
+     <button type="button" data-cap="28" aria-label="Found Pixel" aria-pressed="false"><img src="/art/found/28-front.png" alt=""></button>
+    </div>
+    <button type="button" class="paper-button" id="mint-cap-flip">Flip cap</button>
+   </div>
+  </section>
   <section class="mint-card" aria-labelledby="mint-title">
    <p class="eyebrow">THE FOUND DROP</p>
    <h1 id="mint-title">Found Caps</h1>
@@ -49,5 +61,6 @@
   </section>
  </main>
  <script type="module" src="/src/mint.js"></script>
+ <script type="module" src="/src/mint-cap-preview.js"></script>
 </body>
 </html>
