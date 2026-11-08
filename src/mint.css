@@ -8,12 +8,6 @@
 .mint-cap-stage {
  position:relative; display:grid; place-items:center; isolation:isolate;
  width:100%; aspect-ratio: 1.2; overflow:hidden;
- background: radial-gradient(ellipse at 50% 47%, #fff7e7 15%, #ebdfc8 78%);
- border:1px solid #bfb098; border-radius: 22px 18px 24px 16px;
-}
-.mint-cap-stage::before {
- content:""; position:absolute; width:66%; aspect-ratio:1;
- border:1px dashed #a4957d66; border-radius:50%; pointer-events:none;
 }
 .mint-cap-stage::after {
  content:""; position:absolute; width:54%; height:7%; top:83%;
