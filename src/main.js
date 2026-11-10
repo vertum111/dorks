@@ -7,7 +7,7 @@ import {isFound,wrapCap} from './cap-catalog.js';
 import {foilFinish} from './foil.js';
 import {createCollectionGallery} from './collection-gallery.js';
 import {makeHand} from './hands.js';
-import {GRIP_KEY,gripDefaults,readGripSettings} from './grip-settings.js';
+import {GRIP_KEY,publishedGrip,readGripSettings} from './grip-settings.js';
 import {throwFrame,applyHandFrame,applyCapFlight,tableHeight,DURATION,READY} from './throw-motion.js';
 import {createHandRenderer} from './hand-outline.js';
 import {mountRoundUi} from './round-ui.js';
@@ -101,7 +101,7 @@ const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.ShadowMat
 ground.rotation.x=-Math.PI/2;ground.position.y=-.055;ground.receiveShadow=true;scene.add(ground);
 const ring=new THREE.Mesh(new THREE.RingGeometry(2.35,2.36,100),new THREE.MeshBasicMaterial({color:'#ded9c9',side:THREE.DoubleSide,transparent:true,opacity:.6}));ring.rotation.x=-Math.PI/2;ring.position.y=-.05;scene.add(ring);
 $('#status').textContent='Dragons are warming up their fingers…';
-const gameGrip=editGestures?readGripSettings():gripDefaults;
+const gameGrip=editGestures?readGripSettings():publishedGrip;
 const hands=await Promise.all([makeHand(gameGrip),makeHand(gameGrip)]).catch(error=>{bootLoader.fail();throw error;});
 hands.forEach((hand,i)=>{hand.position.set(i===0?2.45:-2.45,.28,i===0?2:-2);hand.rotation.y=i===0?.3:Math.PI+.3;hand.userData.yaw=i===0?.3:Math.PI+.3;hand.userData.rest=hand.position.clone();applyHandFrame(hand,null,hand.userData.rest,hand.userData.yaw);scene.add(hand);});
 addEventListener('storage',event=>{if(editGestures&&event.key===GRIP_KEY){hands.forEach(h=>h.userData.applyGripSettings(readGripSettings()));updateTable();}});

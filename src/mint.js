@@ -276,7 +276,6 @@ async function refreshDrop() {
   document.querySelector('#mint-network').textContent = drop.contractId
    ? `NEAR ${drop.network} · ${drop.contractId}` : 'NEAR Found drop';
   if (Number.isInteger(drop.remaining)) document.querySelector('#mint-supply').textContent = `${drop.remaining.toLocaleString()} left`;
-  document.querySelector('#mint-back').hidden = !drop.enabled;
   status.textContent = drop.enabled ? 'DORKS covers the network fee.' : 'Mint is not open yet.';
  } catch {
   status.textContent = 'Mint is not open yet.';

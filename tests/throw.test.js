@@ -3,12 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {publishedGrip} from '../src/grip-settings.js';
 import {rigHand} from '../src/rigged-hand.js';
 import {applyHandFrame,applyCapFlight,tableHeight,throwFrame,capSupportHeight} from '../src/throw-motion.js';
 const bytes=await fs.readFile(new URL('../public/models/webxr-hand/right.glb',import.meta.url));
 const gltf=await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
-const hand=rigHand(gltf.scene),settings=JSON.parse(await fs.readFile(new URL('../presets/user-grip-2026-11-03.json',import.meta.url),'utf8'));
-hand.userData.applyGripSettings(settings);let mesh;hand.traverse(o=>{if(o.isSkinnedMesh)mesh=o;});
+const settings=publishedGrip,hand=rigHand(gltf.scene,settings);
+let mesh;hand.traverse(o=>{if(o.isSkinnedMesh)mesh=o;});
 function intersectsCap(cap){
  mesh.skeleton.update();cap.updateMatrixWorld(true);const inverse=cap.matrixWorld.clone().invert();
  const vertices=[];

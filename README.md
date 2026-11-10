@@ -4,7 +4,7 @@ DORKS is a browser game about playground cap battles. **Found Caps** are NEAR NF
 
 Built for **NEAR HACKATHON 2026** · Track: **NFTs That Do Something** (`nfts`).
 
-- Play: https://dorksplay.lol/play
+- Play: https://dorksplay.lol/
 - Mint (free, up to 3 per wallet): https://dorksplay.lol/mint
 - Contract (NEAR mainnet): [`vertumion-hot2.tg`](https://nearblocks.io/address/vertumion-hot2.tg) · [deployment tx](https://nearblocks.io/txns/8CEKVpmiEDE8Xk7K5emDATE2gxuvvPGja2TV4eq7FJRx)
 - Live supply: https://dorksplay.lol/api/found/status

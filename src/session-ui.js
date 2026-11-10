@@ -7,6 +7,7 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
   <p id="lobby-message" role="status">One cap each. One wonderfully bad decision.</p>
   <div class="lobby-cap"><img id="lobby-cap-art" alt="Your chosen dragon"><span>Your cap<strong id="lobby-cap-name"></strong></span><button id="lobby-change" class="text-button">Change</button></div>
   <button id="find-player" class="primary">Find a dork</button><button id="practice" class="paper-button">Practice with Bot</button>
+  <a id="lobby-mint" class="paper-button" href="/mint">Mint Found Caps</a>
   <button id="find-staked" class="paper-button" hidden>Find a stake match · Testnet</button>
   <button id="refund-stake" class="paper-button" hidden>Recover expired stake</button>
   <button id="cancel-search" class="paper-button" hidden>Cancel search</button>
@@ -52,7 +53,7 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
    $('#find-player').disabled=stakeBusy||stake.status!=='locking'||Boolean(stake.locked?.[room.side])||
     (stake.deadline??0)<=Date.now();
   }
-  $('#practice').hidden=queued||Boolean(room);$('#cancel-search').hidden=!queued&&!rematch&&room?.status!=='ready';$('#cancel-search').textContent=queued?'Cancel search':'Back to lobby';
+  $('#practice').hidden=queued||Boolean(room);$('#lobby-mint').hidden=queued||Boolean(room);$('#cancel-search').hidden=!queued&&!rematch&&room?.status!=='ready';$('#cancel-search').textContent=queued?'Cancel search':'Back to lobby';
   $('.lobby-cap').hidden=queued||Boolean(room);$('#lobby-foot').textContent=error?'Your cap is safe. Try again or practice with Bot.':queued?'Keep this tab open. No sneaky bot substitutions.':'Casual online and Bot practice. No caps are transferred.';
   $('#match-banner').hidden=hidden||mode==='lobby'||rematch||room?.status==='ready';
   $('#match-opponent').textContent=mode==='practice'?'Practice · Bot':`You vs ${room?.opponent||'another dork'}`;
