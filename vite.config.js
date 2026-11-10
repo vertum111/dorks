@@ -7,7 +7,7 @@ export default defineConfig({
  build: {
   copyPublicDir: !launchOnly,
   rollupOptions: {input: launchOnly ? {mint:page('./mint.html')} : {
-   game:page('./index.html'), mint:page('./mint.html'), handLab:page('./hand-lab.html'),
+   game:page('./index.html'), mint:page('./mint.html'), handLab:page('./hand-lab.html'), recordingAlbum:page('./cap-album-recording.html'),
   }},
  },
 });

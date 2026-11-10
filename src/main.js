@@ -25,6 +25,7 @@ import {mountTeaserRecorder} from './teaser-recorder.js';
 const bootLoader=mountLoader();const audio=createAudioDesign();const matchCues=mountMatchCues();
 
 const $=s=>document.querySelector(s);
+const recordingAlbum=document.body.hasAttribute('data-recording-album');
 let saved={score:[0,0]};
 try {
   const s=JSON.parse(localStorage.getItem('dragon-caps-v1'));
@@ -34,11 +35,11 @@ try {
 let teaserRecorder=null;
 let state=newGame(saved.score),equipped=0,view='arena',busy=false,charging=false;
 let walletCaps=[], equippedToken;
-const editGestures=import.meta.env.DEV;
+const editGestures=import.meta.env.DEV&&!recordingAlbum;
 let chargeStart=0,position=0,timer,animation=null,chargePickup=null,handShow=null;
 let roundDragons=[0,2],meshes=[],held=[true,true],searchingHand=false,lastDrumBeat=-1;const drumPoint=new THREE.Vector3();
 const capFromMint=new URLSearchParams(location.search).get('cap');
-try{
+if(!recordingAlbum)try{
  equippedToken=capFromMint===null?localStorage.getItem('dorks-equipped-token'):null;
  const savedCap=capFromMint??localStorage.getItem('dorks-equipped');
  const n=Number(savedCap);
@@ -67,15 +68,15 @@ $('#app').innerHTML=`
   <nav class="bottom-bar" aria-label="Game menu"><button id="open-collection" class="paper-button">My dorks <span id="owned-count">0</span></button><div>${editGestures?'<button id="tune-gesture" class="paper-button">Gesture</button>':''}<a class="round-button x-link" href="https://x.com/playdorks" target="_blank" rel="noopener noreferrer" aria-label="DORKS on X · opens a new tab"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 4 L12 4 24 24 17 24 Z M23 4 Q14 14 5 24"/></svg></a><button id="sound" class="round-button" aria-label="Sound settings" aria-pressed="false">♪</button><button id="help" class="round-button" aria-label="How to play">?</button></div></nav>
   <section id="collection" class="cap-book" hidden aria-labelledby="book-title">
     <div class="book-shell">
-      <header class="book-header">
+      <header class="book-header" ${recordingAlbum?'hidden':''}>
         <button id="close-collection" class="paper-button">Back to lobby</button>
         <div class="book-wallet"><span data-wallet-account hidden></span><button class="paper-button" data-found-wallet>Connect wallet</button></div>
       </header>
       <div class="book-cover">
-        <div><p class="eyebrow">DORKS / THE CAP ALBUM</p><h1 id="book-title" tabindex="-1">Collect ’em all!</h1><p>Find your favourites and take them to the table.</p></div>
-        <div class="book-stamp"><strong id="book-count">0 / 32</strong><span>FOUND DESIGNS</span></div>
+        <div><p class="eyebrow">DORKS / THE CAP ALBUM</p><h1 id="book-title" tabindex="-1">Collect ’em all!</h1><p>${recordingAlbum?'All caps are open for 3D preview.':'Find your favourites and take them to the table.'}</p></div>
+        <div class="book-stamp"><strong id="book-count">0 / 32</strong><span>${recordingAlbum?'CAP DESIGNS':'FOUND DESIGNS'}</span></div>
       </div>
-      <div class="book-tools">
+      <div class="book-tools" ${recordingAlbum?'hidden':''}>
         <p id="wallet-message" role="status"></p>
         <button id="retry-wallet" class="paper-button" hidden>Retry</button>
         <a class="paper-button" href="/mint">Mint Found Caps</a>
@@ -102,7 +103,7 @@ $('#app').innerHTML=`
  </div>
  <dl class="cap-attributes"><div><dt>Series</dt><dd id="cap-series"></dd></div><div><dt>Rarity</dt><dd id="cap-rarity"></dd></div><div><dt>Element</dt><dd id="cap-element"></dd></div></dl>
  <p id="cap-description"></p>
- <footer>
+ <footer ${recordingAlbum?'hidden':''}>
   <p id="cap-ownership"></p>
   <label id="book-edition-label">Edition <select id="book-edition"></select></label>
   <button id="choose" class="primary">Use this cap</button>
@@ -135,12 +136,12 @@ ground.rotation.x=-Math.PI/2;ground.position.y=-.055;ground.receiveShadow=true;s
 const ring=new THREE.Mesh(new THREE.RingGeometry(2.35,2.36,100),new THREE.MeshBasicMaterial({color:'#ded9c9',side:THREE.DoubleSide,transparent:true,opacity:.6}));ring.rotation.x=-Math.PI/2;ring.position.y=-.05;scene.add(ring);
 $('#status').textContent='Dragons are warming up their fingers…';
 const gameGrip=editGestures?readGripSettings():publishedGrip;
-const hands=await Promise.all([makeHand(gameGrip),makeHand(gameGrip)]).catch(error=>{bootLoader.fail();throw error;});
+const hands=recordingAlbum?[]:await Promise.all([makeHand(gameGrip),makeHand(gameGrip)]).catch(error=>{bootLoader.fail();throw error;});
 hands.forEach((hand,i)=>{hand.position.set(i===0?2.45:-2.45,.28,i===0?2:-2);hand.rotation.y=i===0?.3:Math.PI+.3;hand.userData.yaw=i===0?.3:Math.PI+.3;hand.userData.rest=hand.position.clone();applyHandFrame(hand,null,hand.userData.rest,hand.userData.yaw);scene.add(hand);});
 addEventListener('storage',event=>{if(editGestures&&event.key===GRIP_KEY){hands.forEach(h=>h.userData.applyGripSettings(readGripSettings()));updateTable();}});
 const restingPositions=[new THREE.Vector3(.83,.016,.28),new THREE.Vector3(-.83,.016,-.28)];
 function updateTable(){const y=tableHeight(hands[0].userData.settings);ground.position.y=y;ring.position.y=y+.005;restingPositions.forEach(v=>v.y=y+.012);meshes.forEach((m,i)=>{if(!held[i]&&!animation)m.position.y=y+.012;});}
-updateTable();
+if(!recordingAlbum)updateTable();
 function gripPosition(player,stack=0){const h=hands[player];h.updateWorldMatrix(true,false);return h.localToWorld(h.userData.grip.clone().add(new THREE.Vector3(.025*stack,.028*stack,0)));}
 const heldEuler=new THREE.Euler(),heldQuaternion=new THREE.Quaternion();
 function orientHeld(mesh,player,face){
@@ -152,7 +153,7 @@ function refreshMeshes(){
   meshes=roundDragons.map((n,i)=>{const m=capMesh(dragons[n]);m.position.copy(gripPosition(i));orientHeld(m,i,false);m.scale.setScalar(.85);scene.add(m);return m;});
 }
 function arenaCamera(){camera.position.set(0,9.4,8.5).multiplyScalar(Math.max(1,.95/camera.aspect));controls.target.set(0,0,0);camera.lookAt(controls.target);}
-arenaCamera();refreshMeshes();
+if(!recordingAlbum){arenaCamera();refreshMeshes();}
 const roundUi=mountRoundUi({
  getResultDelay:()=>teaserRecorder?.active?3200:1100,
  onClock:seconds=>audio.tick(seconds),
@@ -174,6 +175,7 @@ new ResizeObserver(resize).observe(container);
 
 function draw(t){
   requestAnimationFrame(draw);
+  if(recordingAlbum){capPreview.draw(t);return;}
   if(charging)position=throwMeter.frame(t-chargeStart);
   hands.forEach((hand,i)=>{
     const ready=charging&&i===0&&!reduced?READY*Math.min(1,(t-chargeStart)/180):null;
@@ -228,7 +230,7 @@ function draw(t){
   meshes.forEach(m=>updateCapFoil(m,reduced?0:t/1000,camera));if(controls.enabled)controls.update();renderScene(scene,camera);teaserRecorder?.frame();
 }
 requestAnimationFrame(draw);
-let sessionUi;sessionUi=mountSessionUi({
+let sessionUi;sessionUi=recordingAlbum?null:mountSessionUi({
  getSelected:()=>equipped,
  lockStake:stake=>gameWallet.lockStake(stake),refundStake:stake=>gameWallet.refundStake(stake),onStakeChange:()=>gameWallet.refresh(),
  foundPass(cap){const owned=walletCaps.find(entry=>entry.index===cap&&entry.id===equippedToken)??walletCaps.find(entry=>entry.index===cap);return owned&&walletOwner?{tokenId:owned.id,accountId:walletOwner,sign:challenge=>gameWallet.sign(challenge)}:null;},
@@ -336,20 +338,22 @@ $('#next').onclick=()=>sessionUi.replay();
 
 
 function setView(v){
-  if(busy||charging)return;clearTimeout(timer);view=v;
+  if(busy||charging||(recordingAlbum&&v!=='collection'))return;clearTimeout(timer);view=v;
   if(v!=='collection')closeCapDetail();
   $('#collection').hidden=v!=='collection';$('.hud').hidden=v==='collection';$('.shot-controls').hidden=v==='collection';$('.bottom-bar').hidden=v==='collection';$('.table-note').hidden=v==='collection';
   document.body.classList.toggle('inspecting',v==='collection');
   hands.forEach(h=>h.visible=v==='arena');meshes.forEach(m=>m.visible=v==='arena');ground.visible=v==='arena';ring.visible=v==='arena';
   controls.enabled=false;
   container.hidden=v==='collection';
-  sessionUi.setHidden(v==='collection');
-  $('#close-collection').textContent=`Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
+  if(sessionUi){
+   sessionUi.setHidden(v==='collection');
+   $('#close-collection').textContent=`Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
+  }
   if(v==='collection'){
    $('#collection').scrollTop=0;
    if(!$('#book-pages').childElementCount)renderBook();
    $('#book-title').focus({preventScroll:true});
-   void gameWallet.refresh();
+   if(!recordingAlbum)void gameWallet.refresh();
   }else{resize();scheduleBot();$('#open-collection').focus({preventScroll:true});}
   update();
 }
@@ -364,7 +368,7 @@ const bookSlots=()=>[...$('#book-pages').querySelectorAll('button[data-cap-index
 function updateCapDetail(){
  const editions=walletCaps.filter(cap=>cap.index===previewIndex);
  const selectable=previewIndex===0||editions.length>0;
- $('#cap-preview').classList.toggle('locked',!selectable);
+ $('#cap-preview').classList.toggle('locked',!recordingAlbum&&!selectable);
  $('#cap-ownership').textContent=editions.length?'In your collection':selectable?'Free starter cap':'Locked · Preview only';
  $('#choose').hidden=!selectable;
  const select=$('#book-edition');
@@ -436,12 +440,12 @@ $('#cap-left').onclick=()=>capPreview.rotate(-Math.PI/4);
 $('#cap-right').onclick=()=>capPreview.rotate(Math.PI/4);
 function renderBook(){
  const ownedIndices=new Set(walletCaps.map(cap=>cap.index));
- $('#book-count').textContent=`${ownedIndices.size} / ${dragons.filter(isFound).length}`;
+ $('#book-count').textContent=recordingAlbum?String(dragons.length):`${ownedIndices.size} / ${dragons.filter(isFound).length}`;
  const pages=$('#book-pages');
  pages.innerHTML='';
  for(const chapter of [
-  {id:'book-found',number:'01',name:'Found Caps',note:'Scuffed caps from the streets. Mint them or trade with a friend.',found:true},
-  {id:'book-originals',number:'02',name:'Originals',note:'The original DORKS designs. Ember is your free starter.',found:false},
+  {id:'book-found',number:'01',name:'Found Caps',note:recordingAlbum?'Scuffed caps from the streets.':'Scuffed caps from the streets. Mint them or trade with a friend.',found:true},
+  {id:'book-originals',number:'02',name:'Originals',note:recordingAlbum?'The original DORKS designs.':'The original DORKS designs. Ember is your free starter.',found:false},
  ]){
   const section=document.createElement('section');
   section.className='book-page';
@@ -455,10 +459,10 @@ function renderBook(){
    const item=document.createElement('li');
    const slot=document.createElement('button');
    slot.className='book-cap';
-   if(!owned&&!starter)slot.classList.add('locked');
+   if(!recordingAlbum&&!owned&&!starter)slot.classList.add('locked');
    slot.style.setProperty('--cap-paper',dragon.color);
    const number=String(dragon.originalId??dragon.id).padStart(2,'0');
-   slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="/art/album/${dragon.id}.webp" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status">${owned?'Collected':starter?'Starter':'Locked'}</span>`;
+   slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="/art/album/${dragon.id}.webp" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status" ${recordingAlbum?'hidden':''}>${owned?'Collected':starter?'Starter':'Locked'}</span>`;
    slot.type='button';
    slot.dataset.capIndex=index;
    slot.setAttribute('aria-haspopup','dialog');
@@ -474,7 +478,7 @@ $('#close-collection').onclick=()=>setView('arena');
 $('#home').onclick=()=>setView('arena');
 
 let walletOwner;
-const gameWallet=mountGameWallet({onChange({accountId,caps,busy:loading,error,available}){
+const gameWallet=recordingAlbum?null:mountGameWallet({onChange({accountId,caps,busy:loading,error,available}){
  const inventoryChanged=walletOwner!==accountId||caps.length!==walletCaps.length||caps.some((cap,i)=>cap.id!==walletCaps[i]?.id);
  walletOwner=accountId;
  walletCaps=caps;
@@ -514,7 +518,8 @@ $('#choose').onclick=()=>{
 };
 $('#help').onclick=()=>{if(busy||state.phase==='rps')return;cancelCharge();$('#rules').showModal();};$('#close-help').onclick=$('#start-help').onclick=()=>$('#rules').close();
 $('#sound').onclick=()=>audio.open();
-update();
+if(recordingAlbum)setView('collection');
+else update();
 
 Promise.all(meshes.map(m=>m.userData.ready)).then(()=>bootLoader.done()).catch(()=>bootLoader.fail());
 window.addEventListener('keydown',e=>{if(view==='collection'&&!capDetail.open&&e.key==='Escape')setView('arena');});
