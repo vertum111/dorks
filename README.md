@@ -53,7 +53,15 @@ Local runs need no keys. You get Bot practice and the regular online queue. To t
 - [`found-ownership.mjs`](found-ownership.mjs) + [`match-server.mjs`](match-server.mjs) gate the Found queue by on-chain ownership.
 - [`src/game-wallet.js`](src/game-wallet.js) reads `nft_tokens_for_owner` through HOT `near-connect` and maps each token to its 3D cap.
 
-Match results award in-game points only. Matches never move NFTs, and the game takes no stakes.
+Mainnet online matches and bot practice award points only. They never move NFTs.
+
+### Testnet stake matches
+
+A separate testnet lobby lets two players each lock one specific Found Cap before the round. The contract transfers both caps to the winner once, without asking the loser to sign again. A player who leaves a live match or runs out of throw time forfeits. If the match expires without a settled result, anyone can trigger a refund to the original owners. The game calculates throw accuracy from the server's charge and release timestamps.
+
+The escrow code lives in `contracts/found/src/stakes.rs`. Its storage is separate from the existing mint state. The match server is the trusted arbiter. The server's key must be limited to `open_staked_match` and `settle_staked_match`. Mainnet cannot enable this testnet feature. If the server restarts before submitting the result, its in-memory match is lost and players can recover their stakes after expiry.
+
+For an isolated testnet backend, set `NEAR_NETWORK=testnet`, `FOUND_STAKES_ENABLED=true`, and the testnet `FOUND_CONTRACT_ID`, `FOUND_STAKE_ARBITER_ID` and `FOUND_STAKE_ARBITER_KEY`. Initialize the arbiter from the testnet contract account with `set_stake_arbiter`. To recover from a different browser after expiry, call `refund_staked_match` with the match ID from your lock transaction. Build the candidate WASM from source with `cargo build --manifest-path contracts/found/Cargo.toml --locked --target wasm32-unknown-unknown --release`. The checked-in WASM is the existing mint release. The smoke script takes a testnet credentials file and the candidate WASM path. It exercises the contract directly by default and the HTTP match with `--lobby`.
 
 ## Assets and credits
 

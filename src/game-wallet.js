@@ -106,9 +106,25 @@ export function mountGameWallet({onChange, connectorFor = getFoundConnector, fet
   return {publicKey:proof.publicKey, signature:proof.signature};
  }
 
+ async function stakeAction(method, stake) {
+  if (network !== 'testnet' || stake.contractId !== contractId || !/^\d+$/.test(stake.id) || !accountId) {
+   throw Error('Connect the correct NEAR testnet wallet first.');
+  }
+  const lock = method === 'lock_match_cap';
+  if (lock && !caps.some(cap => cap.id === stake.tokenId)) throw Error('This cap is no longer in your wallet.');
+  const wallet = currentWallet ?? await connector.wallet();
+  const outcome = await wallet.signAndSendTransaction({
+   network, signerId:accountId, receiverId:contractId,
+   actions:[{type:'FunctionCall',params:{methodName:method,
+    args:lock?{match_id:stake.id,token_id:stake.tokenId}:{match_id:stake.id},gas:'80000000000000',deposit:lock?'1':'0'}}],
+  });
+  if (!outcome || outcome.status?.Failure) throw Error('The wallet did not confirm this transaction.');
+  await sync();
+ }
+
  for (const button of buttons) button.onclick = toggle;
  window.addEventListener('focus', () => { if (accountId) void sync(); });
  window.addEventListener('pageshow', event => { if (event.persisted) void sync(); });
  void sync();
- return {refresh:sync, sign};
+ return {refresh:sync, sign, lockStake:stake=>stakeAction('lock_match_cap',stake), refundStake:stake=>stakeAction('refund_staked_match',stake)};
 }

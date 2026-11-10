@@ -29,7 +29,7 @@ export function mountThrowMeter(host,{onTarget=()=>{}}={}){
  </div><p id="timing-callout" role="status"></p>`;
  const meter=host.querySelector('.meter'),callout=host.querySelector('#timing-callout');
  let mode='ready',lastZone=false,lastValue=-1,result=null,roundTurn=-1,targets=createTimingTargets(),target;
- function setTarget(turn){roundTurn=turn;target=targets.get(turn);host.style.setProperty('--target-start',`${target.start*100}%`);host.style.setProperty('--target-end',`${target.end*100}%`);host.style.setProperty('--target-width',`${target.width*100}%`);}
+ function setTarget(turn,sharedTarget){roundTurn=turn;target=sharedTarget||targets.get(turn);host.style.setProperty('--target-start',`${target.start*100}%`);host.style.setProperty('--target-end',`${target.end*100}%`);host.style.setProperty('--target-width',`${target.width*100}%`);}
  function place(position){host.style.setProperty('--timing-position',position);const value=Math.round(position*100);if(value!==lastValue){meter.setAttribute('aria-valuenow',String(value));lastValue=value;}}
  function paint(position){
   place(position);const r=timingResult(position,target),inside=r.grade==='sweet'||r.grade==='perfect';host.dataset.zone=r.grade;
@@ -43,9 +43,9 @@ export function mountThrowMeter(host,{onTarget=()=>{}}={}){
   frame(elapsed){const position=timingPosition(elapsed);if(mode==='charging')paint(position);return position;},
   release(position){result=timingResult(position,target);mode='result';host.dataset.state=mode;host.dataset.zone=result.grade;place(position);callout.textContent=`${result.label} · ${result.percent}%`;meter.setAttribute('aria-valuetext',`${result.label}. ${result.percent} percent timing accuracy, not a guaranteed win.`);return result;},
   cancel(short=false){mode='ready';result=null;lastZone=false;host.dataset.state=mode;host.dataset.zone='idle';place(0);callout.textContent=short?'Hold, don’t tap':'Cancelled';meter.setAttribute('aria-valuetext',callout.textContent);},
-  sync({available,finished,turn=0}){
+  sync({available,finished,turn=0,sharedTarget}){
    host.hidden=finished;if(mode==='charging')return;
-   if(available&&roundTurn!==turn){setTarget(turn);mode='ready';result=null;lastZone=false;place(0);callout.textContent='';host.dataset.zone='idle';}
+   if(available&&(roundTurn!==turn||(sharedTarget&&sharedTarget.center!==target.center))){setTarget(turn,sharedTarget);mode='ready';result=null;lastZone=false;place(0);callout.textContent='';host.dataset.zone='idle';}
    if(result)return;host.dataset.state=available?'ready':'waiting';if(!available){mode='waiting';callout.textContent='';}else if(mode!=='ready'){mode='ready';callout.textContent='';}
   },
   reset(){targets=createTimingTargets();setTarget(0);mode='ready';result=null;lastZone=false;host.dataset.state=mode;host.dataset.zone='idle';place(0);callout.textContent='';}

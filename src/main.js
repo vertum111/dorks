@@ -193,9 +193,10 @@ function draw(t){
 requestAnimationFrame(draw);
 let sessionUi;sessionUi=mountSessionUi({
  getSelected:()=>equipped,
+ lockStake:stake=>gameWallet.lockStake(stake),refundStake:stake=>gameWallet.refundStake(stake),onStakeChange:()=>gameWallet.refresh(),
  foundPass(cap){const owned=walletCaps.find(entry=>entry.index===cap&&entry.id===selectedToken)??walletCaps.find(entry=>entry.index===cap);return owned&&walletOwner?{tokenId:owned.id,accountId:walletOwner,sign:challenge=>gameWallet.sign(challenge)}:null;},
  onSearch(searching,lobby){if(searching&&!searchingHand)audio.play('search');searchingHand=searching;if(meshes[1])meshes[1].visible=!searching&&view==='arena'&&!document.body.classList.contains('tuning-gesture');hands[1].traverse(o=>{if(!o.material)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){m.transparent=true;m.opacity=1;if(m.userData.outlineParameters)m.userData.outlineParameters.alpha=m.opacity;}});document.querySelector('.shot-controls').hidden=lobby||view==='collection';if(lobby||searching)matchCues.reset();else matchCues.sync(state,{visible:view==='arena',busy,charging,opponent:sessionUi?.opponent||'Bot'});},
- onRoom(name,status){roundUi.setOpponent(name);if(status==='playing'&&!animation){busy=false;update();}},
+ onRoom(name,status,stake){roundUi.setOpponent(name);if(status==='result')roundUi.setStakeStatus(stake);if(status==='playing'&&!animation){busy=false;update();}},
  onLobby(){matchCues.reset();throwMeter.reset();audio.setActive(false);clearTimeout(timer);cancelCharge();roundUi.reset();animation=null;handShow=null;busy=false;state=newGame();held=[true,true];refreshMeshes();update();},
  onPractice(){audio.play('found');audio.setActive(true);roundUi.setOpponent('Bot');resetMatch();},
  onStart(next,caps){matchCues.reset();throwMeter.reset();audio.play('found');audio.setActive(true);clearTimeout(timer);roundUi.reset();animation=null;handShow=null;busy=false;state=next;roundDragons=caps;refreshMeshes();if(view==='collection')setView('arena');update();},
@@ -230,7 +231,7 @@ function update(){
   $('#status').textContent=state.phase==='rps'?'A tie! Let the fingers decide.':finished?(state.player===0?'You win the round!':'Your rival wins the round.'):busy?(animation?'Sla-a-ap!':`Waiting for ${sessionUi?.opponent||'your rival'}…`):state.player===0?(state.phase==='pair'?'SLAM · Flip both caps to win.':'Your turn.'):`${sessionUi?.opponent||'Your rival'}’s turn${state.phase==='pair'?' · SLAM':''}.`;
 
   $('#slam').disabled=!sessionUi?.canThrow||busy||state.player!==0||!['duel','pair'].includes(state.phase);$('#slam').hidden=finished;
-  $('#next').hidden=!finished||busy;$('#next').textContent='Rematch?';throwMeter.sync({available:!$('#slam').disabled,finished:finished||state.phase==='rps',turn:state.turn});
+  $('#next').hidden=!finished||busy;$('#next').textContent='Rematch?';throwMeter.sync({available:!$('#slam').disabled,finished:finished||state.phase==='rps',turn:state.turn,sharedTarget:sessionUi?.target});
   $('#slam').setAttribute('aria-pressed',String(charging));$('.slam-action').textContent=charging?'Release to slam!':$('#slam').disabled?'Wait for your turn':'Hold to aim';$('.slam-subtitle').textContent=charging?'aim for the striped target':$('#slam').disabled?'watch the caps fly':'then release to slam';
   $('#shot-hint').hidden=finished||busy||state.player!==0;
   $('#owned-count').textContent=`${walletCaps.length}`;
@@ -261,9 +262,9 @@ function animateTurn(previous,next,skill,prepared=0){
 }
 function scheduleBot(){clearTimeout(timer);if(sessionUi?.mode==='practice'&&state.player===1&&['duel','pair'].includes(state.phase)&&view==='arena')timer=setTimeout(()=>takeTurn(.3+Math.random()*.6),state.phase==='pair'?2400:1800);}
 let activeThrowPointer=null;
-function startCharge(){if(!sessionUi?.canThrow)return;if(view!=='arena'||busy||charging||state.player!==0||!['duel','pair'].includes(state.phase)||document.querySelector('dialog[open]'))return;audio.play('charge');charging=true;chargeStart=performance.now();position=0;throwMeter.start();chargePickup={indices:state.phase==='pair'?[0,1]:[0],positions:meshes.map(m=>m.position.clone()),held:[...held]};chargePickup.indices.forEach(i=>held[i]=false);update();}
+function startCharge(){if(!sessionUi?.canThrow)return;if(view!=='arena'||busy||charging||state.player!==0||!['duel','pair'].includes(state.phase)||document.querySelector('dialog[open]'))return;audio.play('charge');charging=true;sessionUi.startCharge();chargeStart=performance.now();position=0;throwMeter.start();chargePickup={indices:state.phase==='pair'?[0,1]:[0],positions:meshes.map(m=>m.position.clone()),held:[...held]};chargePickup.indices.forEach(i=>held[i]=false);update();}
 function releaseCharge(){if(!charging)return;const elapsed=performance.now()-chargeStart;if(elapsed<MIN_HOLD_MS){cancelCharge(true);return;}position=timingPosition(elapsed);const prepared=READY*Math.min(1,elapsed/MIN_HOLD_MS);charging=false;activeThrowPointer=null;chargePickup=null;const result=throwMeter.release(position);takeTurn(result.skill,prepared);}
-function cancelCharge(short=false){if(!charging)return;charging=false;activeThrowPointer=null;if(chargePickup){held=[...chargePickup.held];meshes.forEach((m,i)=>{m.position.copy(chargePickup.positions[i]);m.rotation.set((state.faces[i]?0:Math.PI),held[i]?hands[i].rotation.y:(i===0?-.2:Math.PI-.2),0);});chargePickup=null;}throwMeter.cancel(short===true);update();}
+function cancelCharge(short=false){if(!charging)return;sessionUi?.cancelCharge();charging=false;activeThrowPointer=null;if(chargePickup){held=[...chargePickup.held];meshes.forEach((m,i)=>{m.position.copy(chargePickup.positions[i]);m.rotation.set((state.faces[i]?0:Math.PI),held[i]?hands[i].rotation.y:(i===0?-.2:Math.PI-.2),0);});chargePickup=null;}throwMeter.cancel(short===true);update();}
 $('#slam').addEventListener('pointerdown',e=>{if(view!=='arena'||e.button!==0||activeThrowPointer!==null)return;e.preventDefault();e.currentTarget.focus({preventScroll:true});startCharge();if(charging){activeThrowPointer=e.pointerId;e.currentTarget.setPointerCapture(e.pointerId);}});
 $('#slam').addEventListener('pointerup',e=>{if(e.pointerId!==activeThrowPointer)return;e.preventDefault();releaseCharge();});
 $('#slam').addEventListener('pointercancel',()=>cancelCharge());
@@ -288,10 +289,11 @@ function resetMatch(){
  clearTimeout(timer);roundUi.reset();handShow=null;busy=false;state=newGame(state.score);const opponents=practiceOpponents();roundDragons=[equipped,opponents[Math.floor(Math.random()*opponents.length)]];refreshMeshes();update();
 }
 function finishRound(next,online=false){
- animation=null;state=next;clearTimeout(timer);held=[false,false];audio.play(resultReaction(state));
+ cancelCharge();animation=null;state=next;clearTimeout(timer);held=[false,false];audio.play(resultReaction(state));
+ if(state.wonBy==='forfeit')meshes.forEach((mesh,i)=>{mesh.position.copy(restingPositions[i]);mesh.rotation.set(state.faces[i]?0:Math.PI,i===0?-.2:Math.PI-.2,0);});
  if(!online)sessionUi.recordPractice(state,roundDragons);
  persist();
- busy=true;handShow={kind:'winner',winner:state.player,palmReady:state.wonBy==='rps',started:performance.now()};update();roundUi.showResult(state);
+ busy=true;handShow={kind:'winner',winner:state.player,palmReady:state.wonBy==='rps',started:performance.now()};update();roundUi.showResult(state,online?sessionUi.stake:null);
 }
 $('#next').onclick=()=>sessionUi.replay();
 

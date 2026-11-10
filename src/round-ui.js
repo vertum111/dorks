@@ -13,7 +13,7 @@ export function mountRoundUi({onReplay,onCountdown,onReveal,onRpsFinished,onResu
  <dialog id="outcome-dialog" class="outcome-dialog" aria-labelledby="outcome-title"><div class="outcome-cloud">
   <button id="outcome-close" class="round-button outcome-close" aria-label="Back to the table">×</button>
   <span id="outcome-stamp" class="outcome-stamp"></span><div id="outcome-art"></div>
-  <div class="outcome-copy"><p id="outcome-kicker"></p><h2 id="outcome-title"></h2><p id="outcome-message"></p><button id="outcome-replay" class="primary">Rematch?</button><button id="outcome-lobby" class="paper-button">Back to lobby</button></div>
+  <div class="outcome-copy"><p id="outcome-kicker"></p><h2 id="outcome-title"></h2><p id="outcome-message"></p><p id="outcome-stake" role="status" hidden></p><button id="outcome-replay" class="primary">Rematch?</button><button id="outcome-lobby" class="paper-button">Back to lobby</button></div>
  </div></dialog>`;
  document.body.append(host);
  const $=s=>host.querySelector(s),rps=$('#rps-dialog'),outcome=$('#outcome-dialog');
@@ -44,15 +44,22 @@ export function mountRoundUi({onReplay,onCountdown,onReveal,onRpsFinished,onResu
  function startOnlineRps(state,time){reset();online=true;roundState=state;choice=null;stage='choose';deadline=time;document.body.classList.add('round-overlay');buttons.forEach(b=>{b.disabled=false;b.setAttribute('aria-pressed','false');});$('#rps-title').textContent=state.rpsRound>1?`Round ${state.rpsRound}. No mercy!`:'Rock. Paper. Showdown!';$('#rps-message').textContent='5 seconds. Make your move!';rps.showModal();onCountdown(roundState.rpsRound||1);updateClock();tick=setInterval(updateClock,60);}
  function revealOnline(choices,next){clearTimers();stage='reveal';buttons.forEach(b=>b.disabled=true);$('#rps-seconds').textContent='!';const names=choices.map(c=>c?RPS_LABELS[c]:'No pick');$('#rps-message').textContent=`${names[0]} vs ${names[1]}. ${next.phase==='rps'?'Another tie!':next.player===0?'You win!':`${opponentName} wins!`}`;onReveal(choices[0],choices[1]);}
 
- function showResult(state){
+ function setStakeStatus(stake){
+  const status=$('#outcome-stake');
+  status.hidden=!stake;
+  status.textContent=({paid:'Both caps are in the winner’s wallet.',refund:'Match expired. Recover your cap in the lobby.'})[stake?.status]||'Waiting for the on-chain payout…';
+  $('#outcome-replay').textContent=stake?'Find a new table':'Rematch?';
+ }
+ function showResult(state,stake){
   reset();document.body.classList.add('round-overlay');const won=state.player===0;
   outcome.classList.toggle('is-loss',!won);$('#outcome-art').innerHTML=outcomeDragon(won);
   $('#outcome-stamp').textContent=won?'+2 POINTS':'OOPS.';$('#outcome-kicker').textContent=state.wonBy==='rps'?'THE HANDS HAVE SPOKEN':'THE CAPS HAVE SPOKEN';
   $('#outcome-title').textContent=won?'You win!':'You lose!';
   $('#outcome-message').textContent=won?'Your dragon is looking dangerously smug.':'Round lost. Attitude intact. Fancy a rematch?';
+  setStakeStatus(stake);
   delay=setTimeout(()=>{outcome.showModal();$('#outcome-replay').focus();onResultOpen();},getResultDelay());
  }
  $('#outcome-lobby').onclick=()=>{reset();onLobby();};
  $('#outcome-replay').onclick=()=>{reset();onReplay();};$('#outcome-close').onclick=()=>outcome.close();outcome.addEventListener('close',()=>document.body.classList.remove('round-overlay'));
- return {startRps,startOnlineRps,revealOnline,showResult,reset,setOpponent(name){opponentName=name;}};
+ return {startRps,startOnlineRps,revealOnline,showResult,setStakeStatus,reset,setOpponent(name){opponentName=name;}};
 }

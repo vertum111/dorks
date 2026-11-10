@@ -274,3 +274,5 @@ impl Contract {
         refund_request(request);
     }
 }
+
+mod stakes;
