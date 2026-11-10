@@ -8,7 +8,7 @@
  color: var(--ink);
 }
 .book-shell {max-width: 1100px; margin: auto; padding: clamp(14px, 4vw, 40px);}
-.book-header, .book-wallet, .book-tools, .book-index, .book-selection {
+.book-header, .book-wallet, .book-tools, .book-index {
  display: flex;
  align-items: center;
  gap: 12px;
@@ -71,7 +71,6 @@
  color: var(--ink);
 }
 .book-cap.locked {background: #f5f0e4; border-style: dashed; color: #635c51;}
-.book-cap[aria-pressed="true"] {border-color: var(--ink); outline: 2px solid var(--ink); background: #f7e6ac;}
 .book-number, .book-cap-status {font: 13px Pangolin, cursive;}
 .book-cap strong {font: 19px 'Freckle Face', cursive;}
 .book-art {
@@ -86,20 +85,39 @@
 }
 .book-art img {width: 100%; height: 100%; object-fit: cover;}
 .locked .book-art {filter: grayscale(1); opacity: .31;}
-.book-selection {
- position: sticky;
- bottom: 0;
- z-index: 1;
- justify-content: space-between;
- padding: 10px 14px;
- background: #fffaec;
- border: 2px solid var(--ink);
- border-radius: 8px;
- box-shadow: 0 -3px 0 #30343622;
+dialog.cap-detail {
+ max-width: 520px;
+ max-height: calc(100dvh - 24px);
+ padding: 16px clamp(14px, 4vw, 26px);
+ overflow: auto;
 }
-.book-selection strong {font: 24px 'Freckle Face', cursive;}
-.book-selection select {font: inherit; padding: 4px;}
-.book-selection .primary {min-height: 44px; padding: 6px 16px; font-size: 22px;}
+.cap-detail header, .cap-detail footer, .cap-preview-controls {
+ display: flex;
+ align-items: center;
+ justify-content: space-between;
+ gap: 8px;
+}
+.cap-detail header h2, .cap-detail header p, .cap-detail footer p {margin: 0;}
+.cap-detail footer {flex-wrap: wrap;}
+.cap-detail footer .primary {width: auto; min-height: 44px; padding: 6px 16px;}
+.cap-detail select {font: inherit; padding: 4px;}
+.cap-preview {
+ height: clamp(165px, 39dvh, 300px);
+ margin-top: 10px;
+ border: 1px dashed #8a8072;
+ border-radius: 10px;
+ background: #ede6f5;
+}
+.cap-preview.locked {background: #e9e6df;}
+.cap-preview.locked canvas {filter: grayscale(1);}
+.cap-preview canvas {display: block; touch-action: none; cursor: grab;}
+.cap-preview canvas:active {cursor: grabbing;}
+.cap-preview-controls {justify-content: center; margin: 8px 0;}
+.cap-preview-controls .paper-button {min-width: 44px; min-height: 44px; padding: 4px 10px;}
+.cap-attributes {display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 10px 0;}
+.cap-attributes div {padding: 6px; border: 1px solid #b6aa9b; border-radius: 6px;}
+.cap-attributes dt {font-size: 13px; color: #635c51;}
+.cap-attributes dd {margin: 0; font-size: 16px;}
 .cap-book :focus-visible {outline: 3px solid #65439d; outline-offset: 3px;}
 @media (max-width: 520px) {
  .book-grid {grid-template-columns: repeat(auto-fill, minmax(min(100%, 85px), 1fr));}
