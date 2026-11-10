@@ -7,3 +7,4 @@ node_modules/
 contracts/found/target/
 dist/
 dist-launch/
+.claude/

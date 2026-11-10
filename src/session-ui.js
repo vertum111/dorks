@@ -1,6 +1,6 @@
 import {dragons,frontImage,isFound} from './cap-catalog.js';
 export const arrow=direction=>`<svg viewBox="0 0 32 28" aria-hidden="true" focusable="false"><path d="${direction==='right'?'M3 15 Q16 13 28 14 M19 4 L29 14 19 24':'M29 14 Q16 16 4 14 M13 4 L3 14 13 24'}"/></svg>`;
-export function mountSessionUi({getSelected,onStart,onTurn,onRps,onReveal,onResult,onLobby,onPractice,onRoom,onSearch,onResume}){
+export function mountSessionUi({getSelected,foundPass=()=>null,onStart,onTurn,onRps,onReveal,onResult,onLobby,onPractice,onRoom,onSearch,onResume}){
  const host=document.createElement('div');host.className='session-ui';host.innerHTML=`
  <section id="lobby" class="lobby-card" aria-labelledby="lobby-title">
   <p class="eyebrow" id="lobby-kicker">THE VERY ODD LOBBY</p><h1 id="lobby-title">Collect caps.<br>Lose friends.</h1>
@@ -13,7 +13,7 @@ export function mountSessionUi({getSelected,onStart,onTurn,onRps,onReveal,onResu
  <div id="match-banner" class="match-banner" hidden><span id="match-opponent"></span><b id="match-series"></b><button id="leave-table" class="text-button">Leave table</button></div>
  <dialog id="session-history" class="session-history" aria-labelledby="history-title"><button id="close-history" class="round-button" aria-label="Close session history">×</button><p class="eyebrow">THIS VISIT. ALL THE CHAOS.</p><h2 id="history-title">Your session</h2><div id="session-summary"></div><ol id="match-history"></ol><p class="history-empty">Your first bad decision is still ahead of you.</p></dialog>`;
  document.body.append(host);const $=s=>host.querySelector(s);
- let mode='lobby',room=null,token=null,seq=0,pollTimer,networkBusy=false,queued=false,connected=false,hidden=false,rematch=false,seenRoom=null,seenRound=0,practiceRound=0,history=[],error='',searchStarted=0;
+ let boundAccount=null,mode='lobby',room=null,token=null,seq=0,pollTimer,networkBusy=false,queued=false,connected=false,hidden=false,rematch=false,seenRoom=null,seenRound=0,practiceRound=0,history=[],error='',searchStarted=0;
  try{token=sessionStorage.getItem('dorks-lobby-token');history=JSON.parse(sessionStorage.getItem('dorks-session-history')||'[]');if(!Array.isArray(history))history=[];practiceRound=history.filter(h=>h.practice).length;}catch{}
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function saveHistory(){try{sessionStorage.setItem('dorks-session-history',JSON.stringify(history));}catch{}renderHistory();}
@@ -66,7 +66,21 @@ export function mountSessionUi({getSelected,onStart,onTurn,onRps,onReveal,onResu
  }
  async function poll(){if(networkBusy)return;networkBusy=true;try{if(!token){const c=await request('/api/session',{});token=c.token;try{sessionStorage.setItem('dorks-lobby-token',token);}catch{}}const data=await request(`/api/state?after=${seq}`);error='';process(data);}catch(e){connected=false;error='Lobby connection lost. Reconnecting…';if(/expired/.test(e.message)){token=null;seq=0;seenRoom=null;}render();}finally{networkBusy=false;}}
  async function back(){if(queued||room)await action('leave');room=null;mode='lobby';rematch=false;seq=0;seenRoom=null;onLobby();render();}
- $('#find-player').onclick=async()=>{if(room?.status==='ready'){await action('ready');return;}if(rematch){await action('rematch');return;}searchStarted=Date.now();await action('queue',{cap:getSelected()});};
+ async function queueFound(cap){
+  const pass=foundPass(cap);
+  if(!pass){error='Connect the wallet that holds this Found Cap.';render();return;}
+  try{
+   if(boundAccount!==`${token}:${pass.accountId}`){
+    error='';$('#lobby-message').textContent='Confirm the table pass in your wallet. It is a free signature, not a transaction.';
+    const challenge=await request('/api/action',{type:'wallet-challenge',accountId:pass.accountId});
+    const proof=await pass.sign(challenge);
+    await request('/api/action',{type:'wallet-bind',...challenge,...proof,accountId:pass.accountId});
+    boundAccount=`${token}:${pass.accountId}`;
+   }
+  }catch(e){error=e?.message&&!/reject|cancel|closed/i.test(e.message)?e.message:'Wallet check cancelled. Your cap stays put.';render();return;}
+  await action('queue',{cap,tokenId:pass.tokenId});
+ }
+ $('#find-player').onclick=async()=>{if(room?.status==='ready'){await action('ready');return;}if(rematch){await action('rematch');return;}searchStarted=Date.now();const cap=getSelected();if(isFound(dragons[cap])){await queueFound(cap);return;}await action('queue',{cap});};
  $('#cancel-search').onclick=back;$('#leave-table').onclick=back;
  $('#practice').onclick=async()=>{if(room||queued)await action('leave');room=null;mode='practice';rematch=false;onPractice();render();};
  $('#lobby-change').onclick=()=>document.querySelector('#open-collection').click();$('#close-history').onclick=()=>$('#session-history').close();

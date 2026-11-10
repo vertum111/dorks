@@ -44,9 +44,48 @@ export function createMatchmaker({now=Date.now,random=rand}={}){
   }else throw Error('Unknown action.');
  }
  function snapshot(c,after=0){tick();const r=rooms.get(c.room),side=r?.players.indexOf(c);if(r?.closed)c.room=null;return {name:c.name,queued:c.queued,serverTime:now(),room:r?{id:r.id,side,opponent:r.players[1-side].name,caps:r.caps,state:r.state,status:r.closed?'left':r.status,ready:r.ready,round:r.round,deadline:r.deadline,history:r.history,seq:r.seq,events:r.events.filter(e=>e.id>after)}:null};}
- return {create,auth,action,snapshot,tick};
+ function table(c){return rooms.get(c.room);}
+ return {create,auth,action,snapshot,tick,table};
 }
-export function matchApi({siteOrigin}={}){const mm=createMatchmaker();return async(req,res,url)=>{
+// Found caps are NFTs: the session must prove its NEAR account, and the server
+// checks current on-chain ownership when queueing and again before every round.
+export async function guardFoundAction(gate,mm,c,body){
+ if(body.type==='wallet-challenge'){if(!gate)throw Error('Found matches need the NEAR contract.');return gate.challenge(c.token,body.accountId);}
+ if(body.type==='wallet-bind'){if(!gate)throw Error('Found matches need the NEAR contract.');c.wallet=await gate.bind(c.token,body);return {ok:true,accountId:c.wallet};}
+ if(body.type==='queue'){
+  if(!Number.isInteger(body.cap)||!dragons[body.cap])throw Error('Choose a valid cap.');
+  const wallet=c.wallet;
+  const found=isFound(dragons[body.cap]);
+  if(found){
+   if(!gate)throw Error('Found matches need the NEAR contract.');
+   await gate.check(wallet,body.tokenId,body.cap);
+   if(c.wallet!==wallet)throw Error('Wallet changed. Try again.');
+  }
+  c.foundToken=found?body.tokenId:null;
+  mm.action(c,body);
+  return {ok:true};
+ }
+ if(body.type==='ready'||body.type==='rematch'){
+  const table=mm.table(c);
+  const status=body.type==='ready'?'ready':'result';
+  if(table?.status===status&&!table.closed&&body.round===table.round&&isFound(dragons[c.cap])){
+   const claims=table.players.map(player=>({wallet:player.wallet,token:player.foundToken,cap:player.cap}));
+   try{
+    await Promise.all(claims.map(({wallet,token,cap})=>gate.check(wallet,token,cap)));
+   }catch(e){
+    if(mm.table(c)===table&&table.status===status&&table.round===body.round)mm.action(c,{type:'leave'});
+    throw e;
+   }
+   if(mm.table(c)!==table||table.players.some((player,i)=>player.wallet!==claims[i].wallet||player.foundToken!==claims[i].token)){
+    throw Error('Table changed. Try again.');
+   }
+   mm.action(c,body);
+   return {ok:true};
+  }
+ }
+ return null;
+}
+export function matchApi({siteOrigin,gate=null}={}){const mm=createMatchmaker();return async(req,res,url)=>{
  if(!url.pathname.startsWith('/api/'))return false;
  res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');
  try{
@@ -56,7 +95,7 @@ export function matchApi({siteOrigin}={}){const mm=createMatchmaker();return asy
   if(url.pathname==='/api/state'&&req.method==='GET'){res.end(JSON.stringify(mm.snapshot(c,Number(url.searchParams.get('after'))||0)));return true;}
   if(url.pathname==='/api/action'&&req.method==='POST'){
    let text='';for await(const data of req){text+=data;if(text.length>2048)throw Error('Request too large.');}
-   mm.action(c,JSON.parse(text));res.end(JSON.stringify({ok:true}));return true;
+   const body=JSON.parse(text);if(!body||typeof body!=='object')throw Error('Invalid request.');const reply=await guardFoundAction(gate,mm,c,body);if(reply){res.end(JSON.stringify(reply));return true;}mm.action(c,body);res.end(JSON.stringify({ok:true}));return true;
   }
   res.writeHead(404).end(JSON.stringify({error:'Unknown endpoint.'}));
  }catch(e){res.writeHead(400).end(JSON.stringify({error:e.message}));}

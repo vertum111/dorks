@@ -192,6 +192,7 @@ function draw(t){
 requestAnimationFrame(draw);
 let sessionUi;sessionUi=mountSessionUi({
  getSelected:()=>equipped,
+ foundPass(cap){const owned=walletCaps.find(entry=>entry.index===cap&&entry.id===selectedToken)??walletCaps.find(entry=>entry.index===cap);return owned&&walletOwner?{tokenId:owned.id,accountId:walletOwner,sign:challenge=>gameWallet.sign(challenge)}:null;},
  onSearch(searching,lobby){if(searching&&!searchingHand)audio.play('search');searchingHand=searching;if(meshes[1])meshes[1].visible=!searching&&view==='arena'&&!document.body.classList.contains('tuning-gesture');hands[1].traverse(o=>{if(!o.material)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){m.transparent=true;m.opacity=1;if(m.userData.outlineParameters)m.userData.outlineParameters.alpha=m.opacity;}});document.querySelector('.shot-controls').hidden=lobby||view==='collection';if(lobby||searching)matchCues.reset();else matchCues.sync(state,{visible:view==='arena',busy,charging,opponent:sessionUi?.opponent||'Bot'});},
  onRoom(name,status){roundUi.setOpponent(name);if(status==='playing'&&!animation){busy=false;update();}},
  onLobby(){matchCues.reset();throwMeter.reset();audio.setActive(false);clearTimeout(timer);cancelCharge();roundUi.reset();animation=null;handShow=null;busy=false;state=newGame();held=[true,true];refreshMeshes();update();},

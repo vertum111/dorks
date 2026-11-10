@@ -94,9 +94,21 @@ export function mountGameWallet({onChange, connectorFor = getFoundConnector, fet
   }
  }
 
+ // Signs the server's NEP-413 table pass so the lobby can verify NFT ownership.
+ async function sign(challenge) {
+  if (!accountId || challenge.accountId !== accountId) throw new Error('Connect the wallet that holds this Found Cap.');
+  const wallet = currentWallet ?? await connector.wallet();
+  const nonce = Uint8Array.from(challenge.nonce.match(/../g), byte => parseInt(byte, 16));
+  const proof = await wallet.signMessage({
+   message:challenge.message, recipient:challenge.recipient, nonce, signerId:accountId, network,
+  });
+  if (proof?.accountId !== accountId) throw new Error('Sign with the connected NEAR account.');
+  return {publicKey:proof.publicKey, signature:proof.signature};
+ }
+
  for (const button of buttons) button.onclick = toggle;
  window.addEventListener('focus', () => { if (accountId) void sync(); });
  window.addEventListener('pageshow', event => { if (event.persisted) void sync(); });
  void sync();
- return {refresh:sync};
+ return {refresh:sync, sign};
 }
