@@ -1,11 +1,10 @@
 import './style.css';
+import './cap-book.css';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {dragons,capMesh,disposeCap,frontImage,updateCapFoil} from './caps.js';
 import {isFound,wrapCap} from './cap-catalog.js';
-import {foilFinish} from './foil.js';
-import {createCollectionGallery} from './collection-gallery.js';
 import {makeHand} from './hands.js';
 import {GRIP_KEY,publishedGrip,readGripSettings} from './grip-settings.js';
 import {throwFrame,applyHandFrame,applyCapFlight,tableHeight,DURATION,READY} from './throw-motion.js';
@@ -16,11 +15,10 @@ import {mountGameWallet} from './game-wallet.js';
 import {mountGestureTuner,publishedGestureSettings} from './gesture-settings.js';
 import {newGame,resolveTurn} from './game.js';
 import {mountThrowMeter,timingPosition,MIN_HOLD_MS} from './throw-meter.js';
-import {mountSessionUi,arrow} from './session-ui.js';
+import {mountSessionUi} from './session-ui.js';
 import {createAudioDesign} from './audio.js';
 import {resultReaction,countdownReaction,revealReaction} from './audio-reactions.js';
 import {mountLoader} from './loading.js';
-import {mountSpinHint} from './spin-hint.js';
 import {mountMatchCues} from './match-cues.js';
 import {mountTeaserRecorder} from './teaser-recorder.js';
 const bootLoader=mountLoader();const audio=createAudioDesign();const matchCues=mountMatchCues();
@@ -34,12 +32,13 @@ try {
 } catch {}
 let teaserRecorder=null;
 let state=newGame(saved.score),selected=0,equipped=0,view='arena',busy=false,charging=false;
-let galleryIndices=[], walletCaps=[], selectedToken;
+let walletCaps=[], equippedToken;
 const editGestures=import.meta.env.DEV;
 let chargeStart=0,position=0,timer,animation=null,chargePickup=null,handShow=null;
 let roundDragons=[0,2],meshes=[],held=[true,true],searchingHand=false,lastDrumBeat=-1;const drumPoint=new THREE.Vector3();
 const capFromMint=new URLSearchParams(location.search).get('cap');
 try{
+ equippedToken=capFromMint===null?localStorage.getItem('dorks-equipped-token'):null;
  const savedCap=capFromMint??localStorage.getItem('dorks-equipped');
  const n=Number(savedCap);
  if(savedCap!==null&&Number.isInteger(n)&&n>=0&&n<dragons.length){
@@ -65,13 +64,29 @@ $('#app').innerHTML=`
     <span id="shot-hint">Focus button + hold Space · Esc cancels</span>
   </section>
   <nav class="bottom-bar" aria-label="Game menu"><button id="open-collection" class="paper-button">My dorks <span id="owned-count">0</span></button><div>${editGestures?'<button id="tune-gesture" class="paper-button">Gesture</button>':''}<a class="round-button x-link" href="https://x.com/playdorks" target="_blank" rel="noopener noreferrer" aria-label="DORKS on X · opens a new tab"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M5 4 L12 4 24 24 17 24 Z M23 4 Q14 14 5 24"/></svg></a><button id="sound" class="round-button" aria-label="Sound settings" aria-pressed="false">♪</button><button id="help" class="round-button" aria-label="How to play">?</button></div></nav>
-  <section id="collection" class="collection" hidden aria-label="Cap collection">
-    <div class="collection-heading"><div><h1>Your dorks.</h1><a class="found-mint-link" href="/mint">Found drop</a></div><div class="collection-actions"><div class="wallet-controls"><span data-wallet-account hidden></span><button class="paper-button" data-found-wallet>Connect wallet</button></div><button id="close-collection" class="paper-button">${arrow('left')} Back to lobby</button></div></div>
-    <div class="wallet-empty" id="wallet-empty"><p id="wallet-message" role="status"></p><button class="primary" data-found-wallet>Connect wallet</button><button class="paper-button" id="retry-wallet" hidden>Retry</button></div>
-    <div class="gallery-navigation" aria-label="Browse caps"><button id="previous-cap" class="round-button" aria-label="Previous cap">${arrow('left')}</button><span id="gallery-loading" role="status" hidden>Waking this dork…</span><button id="next-cap" class="round-button" aria-label="Next cap">${arrow('right')}</button></div><div class="cap-info" aria-live="polite"><span id="serial"></span><h2 id="dragon-name"></h2><div id="traits"></div><p id="dragon-desc"></p></div>
-    
-    <div class="cards" role="group" aria-label="Your Found Caps"></div>
-    <div class="collection-pick"><span id="chosen-status">Your next troublemaker.</span><button id="choose" class="primary">Use this dork</button></div>
+  <section id="collection" class="cap-book" hidden aria-labelledby="book-title">
+    <div class="book-shell">
+      <header class="book-header">
+        <button id="close-collection" class="paper-button">Back to lobby</button>
+        <div class="book-wallet"><span data-wallet-account hidden></span><button class="paper-button" data-found-wallet>Connect wallet</button></div>
+      </header>
+      <div class="book-cover">
+        <div><p class="eyebrow">DORKS / THE CAP ALBUM</p><h1 id="book-title" tabindex="-1">Collect ’em all!</h1><p>Find your favourites and take them to the table.</p></div>
+        <div class="book-stamp"><strong id="book-count">0 / 32</strong><span>FOUND DESIGNS</span></div>
+      </div>
+      <div class="book-tools">
+        <p id="wallet-message" role="status"></p>
+        <button id="retry-wallet" class="paper-button" hidden>Retry</button>
+        <a class="paper-button" href="/mint">Mint Found Caps</a>
+      </div>
+      <nav class="book-index" aria-label="Album chapters"><a href="#book-found">01 / Found Caps</a><a href="#book-originals">02 / Originals</a></nav>
+      <div id="book-pages"></div>
+      <div id="book-selection" class="book-selection" hidden>
+        <strong id="book-selected"></strong>
+        <label id="book-edition-label">Edition <select id="book-edition"></select></label>
+        <button id="choose" class="primary">Use this cap</button>
+      </div>
+    </div>
   </section>
 </main>
 <dialog id="rules"><button id="close-help" class="round-button" aria-label="Close rules">×</button><img class="rules-logo" src="/brand/dorks-wordmark.svg" alt="DORKS"><h2>Caps on the table!</h2><ol><li>Find a player and both tap Ready, or choose Bot practice. Hold the yellow button to aim. Release inside the striped target; the star marks perfect timing. A better release helps, but every flip still has some chaos.</li><li>You and your rival throw one cap each. Only yours lands face up? You get to slam the pair!</li><li>Flip both face up in one slam to win the pair. Missed? Your rival gets a turn.</li><li>A tie? Rock, paper, scissors! You have 5 seconds to choose. First winner takes the pair.</li></ol><p>Timing helps. Chaos helps itself. Connect your wallet to see your Found Caps. Bot practice and casual online matches never move your NFTs.</p><button id="start-help" class="primary">Got it. Slam!</button></dialog>`;
@@ -84,7 +99,6 @@ catch {bootLoader.fail();container.innerHTML='<p class="fallback">Enable WebGL t
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;
 container.appendChild(renderer.domElement);
-const spinHint=mountSpinHint(container);
 const renderScene=createHandRenderer(renderer);
 const scene=new THREE.Scene();
 const camera=new THREE.PerspectiveCamera(36,1,.1,100);scene.add(camera);
@@ -120,7 +134,6 @@ function refreshMeshes(){
 }
 function arenaCamera(){camera.position.set(0,9.4,8.5).multiplyScalar(Math.max(1,.95/camera.aspect));controls.target.set(0,0,0);camera.lookAt(controls.target);}
 arenaCamera();refreshMeshes();
-const gallery=createCollectionGallery({renderer,renderScene,environment:scene.environment,onSelect:showDragon,onFlip:()=>audio.play('flip'),onInteract:()=>spinHint.hide(),reduced});
 const roundUi=mountRoundUi({
  getResultDelay:()=>teaserRecorder?.active?3200:1100,
  onClock:seconds=>audio.tick(seconds),
@@ -132,7 +145,12 @@ const roundUi=mountRoundUi({
  onRpsFinished:finishRound,
  onResultOpen:()=>{busy=false;update();}
 });
-function resize(){const {width,height}=container.getBoundingClientRect();renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();if(view==='arena'&&!controls.enabled)arenaCamera();gallery.resize(width,height);if(view==='collection')document.querySelector(`[data-dragon="${selected}"]`)?.scrollIntoView({block:'nearest',inline:'center'});}
+function resize(){
+ const {width,height}=container.getBoundingClientRect();
+ if(!width||!height)return;
+ renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();
+ if(view==='arena'&&!controls.enabled)arenaCamera();
+}
 new ResizeObserver(resize).observe(container);
 
 function draw(t){
@@ -187,14 +205,14 @@ function draw(t){
     h.position.y+=tableHeight(h.userData.settings)+.15-low;
     const beat=Math.floor(t/1000/1.9*4);if(beat!==lastDrumBeat){lastDrumBeat=beat;audio.play('tap',.3);}
   }
-  if(view==='collection'){gallery.draw(t);return;}
+  if(view==='collection')return;
   meshes.forEach(m=>updateCapFoil(m,reduced?0:t/1000,camera));if(controls.enabled)controls.update();renderScene(scene,camera);teaserRecorder?.frame();
 }
 requestAnimationFrame(draw);
 let sessionUi;sessionUi=mountSessionUi({
  getSelected:()=>equipped,
  lockStake:stake=>gameWallet.lockStake(stake),refundStake:stake=>gameWallet.refundStake(stake),onStakeChange:()=>gameWallet.refresh(),
- foundPass(cap){const owned=walletCaps.find(entry=>entry.index===cap&&entry.id===selectedToken)??walletCaps.find(entry=>entry.index===cap);return owned&&walletOwner?{tokenId:owned.id,accountId:walletOwner,sign:challenge=>gameWallet.sign(challenge)}:null;},
+ foundPass(cap){const owned=walletCaps.find(entry=>entry.index===cap&&entry.id===equippedToken)??walletCaps.find(entry=>entry.index===cap);return owned&&walletOwner?{tokenId:owned.id,accountId:walletOwner,sign:challenge=>gameWallet.sign(challenge)}:null;},
  onSearch(searching,lobby){if(searching&&!searchingHand)audio.play('search');searchingHand=searching;if(meshes[1])meshes[1].visible=!searching&&view==='arena'&&!document.body.classList.contains('tuning-gesture');hands[1].traverse(o=>{if(!o.material)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){m.transparent=true;m.opacity=1;if(m.userData.outlineParameters)m.userData.outlineParameters.alpha=m.opacity;}});document.querySelector('.shot-controls').hidden=lobby||view==='collection';if(lobby||searching)matchCues.reset();else matchCues.sync(state,{visible:view==='arena',busy,charging,opponent:sessionUi?.opponent||'Bot'});},
  onRoom(name,status,stake){roundUi.setOpponent(name);if(status==='result')roundUi.setStakeStatus(stake);if(status==='playing'&&!animation){busy=false;update();}},
  onLobby(){matchCues.reset();throwMeter.reset();audio.setActive(false);clearTimeout(timer);cancelCharge();roundUi.reset();animation=null;handShow=null;busy=false;state=newGame();held=[true,true];refreshMeshes();update();},
@@ -303,85 +321,117 @@ function setView(v){
   $('#collection').hidden=v!=='collection';$('.hud').hidden=v==='collection';$('.shot-controls').hidden=v==='collection';$('.bottom-bar').hidden=v==='collection';$('.table-note').hidden=v==='collection';
   document.body.classList.toggle('inspecting',v==='collection');
   hands.forEach(h=>h.visible=v==='arena');meshes.forEach(m=>m.visible=v==='arena');ground.visible=v==='arena';ring.visible=v==='arena';
-  controls.enabled=false;gallery.setEnabled(v==='collection'&&galleryIndices.length>0);container.tabIndex=-1;container.setAttribute('role',v==='collection'?'group':'img');container.setAttribute('aria-label',v==='arena'?'3D cap game table':'3D cap: drag to rotate');sessionUi.setHidden(v==='collection');
-  $('#close-collection').innerHTML=`${arrow('left')} Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
-  if(v==='collection'){if(galleryIndices.length){showDragon(galleryIndices.includes(selected)?selected:galleryIndices[0]);spinHint.show();}void gameWallet.refresh();}else{spinHint.hide();arenaCamera();scheduleBot();}
+  controls.enabled=false;
+  container.hidden=v==='collection';
+  sessionUi.setHidden(v==='collection');
+  $('#close-collection').textContent=`Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
+  if(v==='collection'){
+   $('#collection').scrollTop=0;
+   selectBookCap(equipped);
+   $('#book-title').focus({preventScroll:true});
+   void gameWallet.refresh();
+  }else{resize();scheduleBot();$('#open-collection').focus({preventScroll:true});}
   update();
 }
-function showDragon(i,tokenId){
- if(!galleryIndices.includes(i))return;
- const cap=walletCaps.find(entry=>entry.index===i&&entry.id===(tokenId??selectedToken))??walletCaps.find(entry=>entry.index===i);
- if(!cap)return;
- selectedToken=cap.id;
- if(selected!==wrapCap(i))audio.play('browse');selected=wrapCap(i);const d=dragons[selected];gallery.select(selected);
- $('#dragon-name').textContent=d.name;$('#dragon-desc').textContent=d.desc;$('#serial').textContent=`${walletCaps.indexOf(cap)+1} / ${walletCaps.length} · ${cap.id.toUpperCase()}`;
- $('#traits').innerHTML=`<span>${d.element}</span><span data-rarity="${d.rarity.toLowerCase()}">${d.rarity}</span>${d.foil?`<span class="foil-badge">✦ ${foilFinish(d.foil).label}</span>`:''}<span class="ownership">In your wallet</span>`;
- $('#choose').textContent=selected===equipped?`${d.name} selected`:`Use ${d.name}`;
- $('#gallery-loading').textContent='Waking this dork…';$('#gallery-loading').hidden=false;
- gallery.activeCap.userData.ready.then(()=>{if(selected===wrapCap(i)){$('#gallery-loading').hidden=true;}}).catch(()=>{if(selected===wrapCap(i))$('#gallery-loading').textContent='Art failed to load. Please reload.';});
- for(const button of document.querySelectorAll('[data-token]')){
-  const active=button.dataset.token===selectedToken;
-  button.classList.toggle('selected',active);
-  button.setAttribute('aria-pressed',String(active));
-  if(active&&view==='collection')button.scrollIntoView({block:'nearest',inline:'center',behavior:reduced?'instant':'smooth'});
+function selectBookCap(index){
+ const editions=walletCaps.filter(cap=>cap.index===index);
+ const selectable=index===0||editions.length>0;
+ $('#book-selection').hidden=!selectable;
+ if(!selectable)return;
+ selected=index;
+ $('#book-selected').textContent=dragons[index].name;
+ const select=$('#book-edition');
+ select.replaceChildren(...editions.map(cap=>new Option(`#${cap.serial}`,cap.id)));
+ if(editions.some(cap=>cap.id===equippedToken))select.value=equippedToken;
+ $('#book-edition-label').hidden=editions.length<2;
+ for(const button of $('#book-pages').querySelectorAll('button[data-cap]')){
+  button.setAttribute('aria-pressed',String(Number(button.dataset.cap)===selected));
  }
 }
-$('#open-collection').onclick=()=>setView('collection');$('#close-collection').onclick=()=>setView('arena');$('#home').onclick=()=>setView('arena');
+function renderBook(){
+ const ownedIndices=new Set(walletCaps.map(cap=>cap.index));
+ $('#book-count').textContent=`${ownedIndices.size} / ${dragons.filter(isFound).length}`;
+ const pages=$('#book-pages');
+ pages.innerHTML='';
+ for(const chapter of [
+  {id:'book-found',number:'01',name:'Found Caps',note:'Scuffed caps from the streets. Mint them or trade with a friend.',found:true},
+  {id:'book-originals',number:'02',name:'Originals',note:'The original DORKS designs. Ember is your free starter.',found:false},
+ ]){
+  const section=document.createElement('section');
+  section.className='book-page';
+  section.id=chapter.id;
+  section.innerHTML=`<header><span>PAGE ${chapter.number}</span><h2>${chapter.name}</h2><p>${chapter.note}</p></header><ul class="book-grid"></ul>`;
+  const grid=section.querySelector('ul');
+  for(const [index,dragon] of dragons.entries()){
+   if(isFound(dragon)!==chapter.found)continue;
+   const owned=ownedIndices.has(index);
+   const starter=index===0;
+   const item=document.createElement('li');
+   const slot=document.createElement(owned||starter?'button':'div');
+   slot.className='book-cap';
+   if(!owned&&!starter)slot.classList.add('locked');
+   slot.style.setProperty('--cap-paper',dragon.color);
+   const number=String(dragon.originalId??dragon.id).padStart(2,'0');
+   slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="${frontImage(dragon)}" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status">${owned?'Collected':starter?'Starter':'Locked'}</span>`;
+   if(owned||starter){
+    slot.type='button';
+    slot.dataset.cap=index;
+    slot.setAttribute('aria-pressed','false');
+    slot.onclick=()=>{if(selected!==index)audio.play('browse');selectBookCap(index);};
+   }
+   item.append(slot);
+   grid.append(item);
+  }
+  pages.append(section);
+ }
+}
+$('#open-collection').onclick=()=>setView('collection');
+$('#close-collection').onclick=()=>setView('arena');
+$('#home').onclick=()=>setView('arena');
 
 let walletOwner;
+renderBook();
 const gameWallet=mountGameWallet({onChange({accountId,caps,busy:loading,error,available}){
  const inventoryChanged=walletOwner!==accountId||caps.length!==walletCaps.length||caps.some((cap,i)=>cap.id!==walletCaps[i]?.id);
  walletOwner=accountId;
  walletCaps=caps;
- galleryIndices=[...new Set(caps.map(cap=>cap.index))];
- gallery.setFilter(galleryIndices);
- gallery.setEnabled(view==='collection'&&caps.length>0);
  $('#owned-count').textContent=String(caps.length);
- $('#wallet-message').textContent=error||(loading?'Checking your wallet…':!available?'Wallet collections are unavailable on this network.':!accountId?'Connect a NEAR wallet to see your Found Caps.':'This wallet has no Found Caps yet.');
- $('#wallet-empty').hidden=caps.length>0;
- $('#wallet-empty [data-found-wallet]').hidden=Boolean(accountId)||!available||loading;
+ $('#wallet-message').textContent=error||(loading?'Checking your wallet…':!available?'Wallet collections are unavailable on this network.':!accountId?'Connect your wallet to fill your album.':caps.length?'Pick a collected cap to play.':'Your album is ready for its first Found Cap.');
  $('#retry-wallet').hidden=!error||loading;
- for(const selector of ['.gallery-navigation','.cap-info','.cards','.collection-pick'])$(selector).hidden=caps.length===0;
- if(inventoryChanged){
-  $('.cards').replaceChildren(...caps.map(entry=>{
-   const dragon=dragons[entry.index];
-   const button=document.createElement('button');
-   button.className='cap-card';
-   button.dataset.token=entry.id;
-   button.style.setProperty('--cap-bg',dragon.color);
-   const art=document.createElement('span');
-   art.className='thumb-art';
-   const img=new Image(100,100);
-   img.src=frontImage(dragon);
-   img.alt='';
-   art.append(img);
-   const label=document.createElement('span');
-   label.textContent=`${dragon.name} #${entry.serial}`;
-   button.append(art,label);
-   button.onclick=()=>showDragon(entry.index,entry.id);
-   return button;
-  }));
-  if(view==='collection'&&caps.length)showDragon(galleryIndices.includes(selected)?selected:galleryIndices[0]);
- }
- if(!caps.length)spinHint.hide();
  if(!loading&&sessionUi.mode==='lobby'&&isFound(dragons[equipped])&&!caps.some(cap=>cap.index===equipped)){
   equipped=0;
-  try{localStorage.removeItem('dorks-equipped');}catch{}
+  equippedToken=null;
+  try{localStorage.removeItem('dorks-equipped');localStorage.removeItem('dorks-equipped-token');}catch{}
   roundDragons=[equipped,practiceOpponents()[1]];
   refreshMeshes();
   sessionUi.refresh();
  }
+ if(inventoryChanged){
+  renderBook();
+  if(view==='collection')selectBookCap(caps.some(cap=>cap.index===selected)?selected:equipped);
+ }
 }});
 $('#retry-wallet').onclick=()=>gameWallet.refresh();
-$('#previous-cap').onclick=()=>showDragon(gallery.step(-1));
-$('#next-cap').onclick=()=>showDragon(gallery.step(1));
-$('#choose').onclick=()=>{equipped=selected;try{localStorage.setItem('dorks-equipped',equipped);}catch{}if(sessionUi.mode==='lobby'){roundDragons=[equipped,practiceOpponents()[1]];refreshMeshes();}setView('arena');sessionUi.refresh();};
+$('#choose').onclick=()=>{
+ const token=$('#book-edition').value;
+ if(selected!==0&&!walletCaps.some(cap=>cap.index===selected&&cap.id===token))return;
+ equipped=selected;
+ equippedToken=token||null;
+ try{
+  localStorage.setItem('dorks-equipped',equipped);
+  if(equippedToken)localStorage.setItem('dorks-equipped-token',equippedToken);
+  else localStorage.removeItem('dorks-equipped-token');
+ }catch{}
+ if(sessionUi.mode==='lobby'){roundDragons=[equipped,practiceOpponents()[1]];refreshMeshes();}
+ setView('arena');
+ sessionUi.refresh();
+};
 $('#help').onclick=()=>{if(busy||state.phase==='rps')return;cancelCharge();$('#rules').showModal();};$('#close-help').onclick=$('#start-help').onclick=()=>$('#rules').close();
 $('#sound').onclick=()=>audio.open();
 update();
 
 Promise.all(meshes.map(m=>m.userData.ready)).then(()=>bootLoader.done()).catch(()=>bootLoader.fail());
-window.addEventListener('keydown',e=>{if(view!=='collection')return;if(e.key==='Escape')setView('arena');else if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&galleryIndices.length>0&&!e.target.closest('button')){e.preventDefault();showDragon(gallery.step(e.key==='ArrowRight'?1:-1));}});
+window.addEventListener('keydown',e=>{if(view==='collection'&&e.key==='Escape')setView('arena');});
 
 
 // Explicit recording mode, absent from the normal game UI.

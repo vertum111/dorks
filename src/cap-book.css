@@ -1,0 +1,109 @@
+.cap-book {
+ position: fixed;
+ inset: 0;
+ z-index: 4;
+ overflow-y: auto;
+ overscroll-behavior: contain;
+ background: #eae4d4;
+ color: var(--ink);
+}
+.book-shell {max-width: 1100px; margin: auto; padding: clamp(14px, 4vw, 40px);}
+.book-header, .book-wallet, .book-tools, .book-index, .book-selection {
+ display: flex;
+ align-items: center;
+ gap: 12px;
+ flex-wrap: wrap;
+}
+.book-header {justify-content: space-between; margin-bottom: 18px;}
+.book-wallet {min-width: 0;}
+.book-wallet span {overflow-wrap: anywhere;}
+.book-cover, .book-page {
+ border: 2px solid var(--ink);
+ border-radius: 5px 14px 12px 5px;
+ box-shadow: 4px 5px 0 var(--ink);
+}
+.book-cover {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ gap: 18px;
+ padding: clamp(18px, 5vw, 48px);
+ background: #d9c9f1;
+}
+.book-cover h1 {font: clamp(38px, 8vw, 84px)/.95 'Freckle Face', cursive; margin: 0 0 12px;}
+.book-cover p, .book-tools p, .book-page p {margin: 6px 0;}
+.book-stamp {
+ flex: 0 0 auto;
+ display: grid;
+ place-items: center;
+ gap: 3px;
+ padding: 12px;
+ background: #ffdb78;
+ border: 2px dashed var(--ink);
+ border-radius: 10px;
+ transform: rotate(5deg);
+}
+.book-stamp strong {font: clamp(23px, 5vw, 40px)/1 'Freckle Face', cursive;}
+.book-stamp span, .book-page header > span {font-size: 12px; letter-spacing: .08em;}
+.book-tools {margin: 18px 0; justify-content: space-between;}
+.book-tools a {display: inline-flex; align-items: center; color: inherit; text-decoration: none;}
+.book-index {margin-bottom: 18px;}
+.book-index a {color: inherit; padding: 10px 0; text-underline-offset: .2em;}
+.book-page {background: #fffaec; padding: clamp(12px, 3vw, 28px); margin-bottom: 24px;}
+.book-page h2 {font: clamp(28px, 5vw, 43px)/1 'Freckle Face', cursive; margin: 4px 0;}
+.book-grid {
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr));
+ gap: 10px;
+ padding: 0;
+ margin: 18px 0 0;
+ list-style: none;
+}
+.book-cap {
+ display: grid;
+ justify-items: center;
+ gap: 5px;
+ padding: 8px 4px;
+ width: 100%;
+ border: 1px solid #8a8072;
+ border-radius: 7px;
+ background: #fffdf6;
+ color: var(--ink);
+}
+.book-cap.locked {background: #f5f0e4; border-style: dashed; color: #635c51;}
+.book-cap[aria-pressed="true"] {border-color: var(--ink); outline: 2px solid var(--ink); background: #f7e6ac;}
+.book-number, .book-cap-status {font: 13px Pangolin, cursive;}
+.book-cap strong {font: 19px 'Freckle Face', cursive;}
+.book-art {
+ display: grid;
+ place-items: center;
+ width: min(85%, 86px);
+ aspect-ratio: 1;
+ border-radius: 50%;
+ border: 1px solid #524744;
+ overflow: hidden;
+ background: var(--cap-paper);
+}
+.book-art img {width: 100%; height: 100%; object-fit: contain;}
+#book-originals .book-art img {padding: 9%;}
+.locked .book-art {filter: grayscale(1); opacity: .31;}
+.book-selection {
+ position: sticky;
+ bottom: 0;
+ z-index: 1;
+ justify-content: space-between;
+ padding: 10px 14px;
+ background: #fffaec;
+ border: 2px solid var(--ink);
+ border-radius: 8px;
+ box-shadow: 0 -3px 0 #30343622;
+}
+.book-selection strong {font: 24px 'Freckle Face', cursive;}
+.book-selection select {font: inherit; padding: 4px;}
+.book-selection .primary {min-height: 44px; padding: 6px 16px; font-size: 22px;}
+.cap-book :focus-visible {outline: 3px solid #65439d; outline-offset: 3px;}
+@media (max-width: 520px) {
+ .book-grid {grid-template-columns: repeat(auto-fill, minmax(min(100%, 85px), 1fr));}
+ .book-header .paper-button {font-size: 16px; min-height: 44px;}
+ .book-cover p:not(.eyebrow) {font-size: 16px;}
+}
