@@ -3,7 +3,7 @@ import './cap-book.css';
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {dragons,capMesh,disposeCap,frontImage,updateCapFoil} from './caps.js';
+import {dragons,capMesh,disposeCap,updateCapFoil} from './caps.js';
 import {isFound,wrapCap} from './cap-catalog.js';
 import {makeHand} from './hands.js';
 import {GRIP_KEY,publishedGrip,readGripSettings} from './grip-settings.js';
@@ -327,6 +327,7 @@ function setView(v){
   $('#close-collection').textContent=`Back to ${sessionUi.mode==='lobby'?'lobby':'table'}`;
   if(v==='collection'){
    $('#collection').scrollTop=0;
+   if(!$('#book-pages').childElementCount)renderBook();
    selectBookCap(equipped);
    $('#book-title').focus({preventScroll:true});
    void gameWallet.refresh();
@@ -372,7 +373,7 @@ function renderBook(){
    if(!owned&&!starter)slot.classList.add('locked');
    slot.style.setProperty('--cap-paper',dragon.color);
    const number=String(dragon.originalId??dragon.id).padStart(2,'0');
-   slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="${frontImage(dragon)}" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status">${owned?'Collected':starter?'Starter':'Locked'}</span>`;
+   slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="/art/album/${dragon.id}.webp" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status">${owned?'Collected':starter?'Starter':'Locked'}</span>`;
    if(owned||starter){
     slot.type='button';
     slot.dataset.cap=index;
@@ -390,7 +391,6 @@ $('#close-collection').onclick=()=>setView('arena');
 $('#home').onclick=()=>setView('arena');
 
 let walletOwner;
-renderBook();
 const gameWallet=mountGameWallet({onChange({accountId,caps,busy:loading,error,available}){
  const inventoryChanged=walletOwner!==accountId||caps.length!==walletCaps.length||caps.some((cap,i)=>cap.id!==walletCaps[i]?.id);
  walletOwner=accountId;
@@ -407,8 +407,10 @@ const gameWallet=mountGameWallet({onChange({accountId,caps,busy:loading,error,av
   sessionUi.refresh();
  }
  if(inventoryChanged){
-  renderBook();
-  if(view==='collection')selectBookCap(caps.some(cap=>cap.index===selected)?selected:equipped);
+  if(view==='collection'){
+   renderBook();
+   selectBookCap(caps.some(cap=>cap.index===selected)?selected:equipped);
+  }else $('#book-pages').replaceChildren();
  }
 }});
 $('#retry-wallet').onclick=()=>gameWallet.refresh();

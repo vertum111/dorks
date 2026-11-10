@@ -84,8 +84,7 @@
  overflow: hidden;
  background: var(--cap-paper);
 }
-.book-art img {width: 100%; height: 100%; object-fit: contain;}
-#book-originals .book-art img {padding: 9%;}
+.book-art img {width: 100%; height: 100%; object-fit: cover;}
 .locked .book-art {filter: grayscale(1); opacity: .31;}
 .book-selection {
  position: sticky;
