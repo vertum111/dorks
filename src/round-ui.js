@@ -47,9 +47,9 @@ export function mountRoundUi({onReplay,onCountdown,onReveal,onRpsFinished,onResu
  function showResult(state){
   reset();document.body.classList.add('round-overlay');const won=state.player===0;
   outcome.classList.toggle('is-loss',!won);$('#outcome-art').innerHTML=outcomeDragon(won);
-  $('#outcome-stamp').textContent=won?'+2 CAPS':'OOPS.';$('#outcome-kicker').textContent=state.wonBy==='rps'?'THE HANDS HAVE SPOKEN':'THE CAPS HAVE SPOKEN';
+  $('#outcome-stamp').textContent=won?'+2 POINTS':'OOPS.';$('#outcome-kicker').textContent=state.wonBy==='rps'?'THE HANDS HAVE SPOKEN':'THE CAPS HAVE SPOKEN';
   $('#outcome-title').textContent=won?'You win!':'You lose!';
-  $('#outcome-message').textContent=won?'Your pair. Your dragon is looking dangerously smug.':'Caps gone. Attitude intact. Fancy a rematch?';
+  $('#outcome-message').textContent=won?'Your dragon is looking dangerously smug.':'Round lost. Attitude intact. Fancy a rematch?';
   delay=setTimeout(()=>{outcome.showModal();$('#outcome-replay').focus();onResultOpen();},getResultDelay());
  }
  $('#outcome-lobby').onclick=()=>{reset();onLobby();};

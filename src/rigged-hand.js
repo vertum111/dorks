@@ -5,12 +5,12 @@ import {gestureFingers,gestureFingerFields,gestureWristFields,normalizeGesture} 
 
 // Actual WebXR skinned mesh, MIT licensed. The source rig uses sibling joints
 // for tracked XR poses. Convert those into finger chains, preserving bind pose.
-export async function loadRiggedHand() {
+export async function loadRiggedHand(settings) {
   const {scene}=await new GLTFLoader().loadAsync('/models/webxr-hand/right.glb');
-  return rigHand(scene);
+  return rigHand(scene,settings);
 }
 
-export function rigHand(scene) {
+export function rigHand(scene,settings=readGripSettings()) {
   const bones=new Map();scene.traverse(o=>{if(o.isBone)bones.set(o.name,o);});
   const wrist=bones.get('wrist'),chains={};
   for(const finger of ['thumb','index-finger','middle-finger','ring-finger','pinky-finger']){
@@ -155,7 +155,7 @@ export function rigHand(scene) {
   };
   root.userData.wristPivot=new THREE.Vector3(.0091571668,.0391260833,.0557754710).multiplyScalar(24);
   root.userData.gripRotation=gripRotation;
-  root.userData.applyGripSettings(readGripSettings());
+  root.userData.applyGripSettings(settings);
   root.userData.bones=bones;root.userData.chains=chains;
   root.userData.grip=grip;
   root.userData.model=scene;

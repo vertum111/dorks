@@ -10,8 +10,12 @@ export const gestureDefaults={pitch:0,yaw:0,roll:0,positionX:0,positionY:0,posit
 export function normalizeGesture(value={}){return Object.fromEntries(Object.keys(gestureDefaults).map(k=>{const limit=k.startsWith('position')?4:180;return [k,Number.isFinite(value?.[k])?Math.max(-limit,Math.min(limit,value[k])):0];}));}
 export function defaultBotGesture(yours){return {...normalizeGesture(yours),positionX:.5,positionY:-.5,positionZ:3.5};}
 export function gestureKey(player,name='middle'){return name==='rock'?(player===1?BOT_ROCK_GESTURE_KEY:ROCK_GESTURE_KEY):(player===1?BOT_GESTURE_KEY:GESTURE_KEY);}
+export function publishedGestureSettings(player=0,name='middle'){
+ if(name==='rock')return normalizeGesture(rockPresets[player===1?1:0]);
+ return player===1?defaultBotGesture(victoryPreset):normalizeGesture(victoryPreset);
+}
 export function readGestureSettings(player=0,name='middle'){
- const fallback=name==='rock'?normalizeGesture(rockPresets[player===1?1:0]):player===1?defaultBotGesture(readGestureSettings(0)):normalizeGesture(victoryPreset);
+ const fallback=name==='middle'&&player===1?defaultBotGesture(readGestureSettings(0)):publishedGestureSettings(player,name);
  try{const value=JSON.parse(localStorage.getItem(gestureKey(player,name))||'null');return value&&typeof value==='object'&&!Array.isArray(value)?normalizeGesture(value):fallback;}catch{return fallback;}
 }
 export function mountGestureTuner({onOpen,onChange,onClose,onGameView}){

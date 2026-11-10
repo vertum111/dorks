@@ -7,13 +7,13 @@ import {isFound,wrapCap} from './cap-catalog.js';
 import {foilFinish} from './foil.js';
 import {createCollectionGallery} from './collection-gallery.js';
 import {makeHand} from './hands.js';
-import {GRIP_KEY,readGripSettings} from './grip-settings.js';
+import {GRIP_KEY,gripDefaults,readGripSettings} from './grip-settings.js';
 import {throwFrame,applyHandFrame,applyCapFlight,tableHeight,DURATION,READY} from './throw-motion.js';
 import {createHandRenderer} from './hand-outline.js';
 import {mountRoundUi} from './round-ui.js';
 import {presentGesture} from './gestures.js';
 import {mountGameWallet} from './game-wallet.js';
-import {mountGestureTuner,readGestureSettings} from './gesture-settings.js';
+import {mountGestureTuner,publishedGestureSettings} from './gesture-settings.js';
 import {newGame,resolveTurn} from './game.js';
 import {mountThrowMeter,timingPosition,MIN_HOLD_MS} from './throw-meter.js';
 import {mountSessionUi,arrow} from './session-ui.js';
@@ -101,9 +101,10 @@ const ground=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.ShadowMat
 ground.rotation.x=-Math.PI/2;ground.position.y=-.055;ground.receiveShadow=true;scene.add(ground);
 const ring=new THREE.Mesh(new THREE.RingGeometry(2.35,2.36,100),new THREE.MeshBasicMaterial({color:'#ded9c9',side:THREE.DoubleSide,transparent:true,opacity:.6}));ring.rotation.x=-Math.PI/2;ring.position.y=-.05;scene.add(ring);
 $('#status').textContent='Dragons are warming up their fingers…';
-const hands=await Promise.all([makeHand(),makeHand()]).catch(error=>{bootLoader.fail();throw error;});
+const gameGrip=editGestures?readGripSettings():gripDefaults;
+const hands=await Promise.all([makeHand(gameGrip),makeHand(gameGrip)]).catch(error=>{bootLoader.fail();throw error;});
 hands.forEach((hand,i)=>{hand.position.set(i===0?2.45:-2.45,.28,i===0?2:-2);hand.rotation.y=i===0?.3:Math.PI+.3;hand.userData.yaw=i===0?.3:Math.PI+.3;hand.userData.rest=hand.position.clone();applyHandFrame(hand,null,hand.userData.rest,hand.userData.yaw);scene.add(hand);});
-addEventListener('storage',event=>{if(event.key===GRIP_KEY){hands.forEach(h=>h.userData.applyGripSettings(readGripSettings()));updateTable();}});
+addEventListener('storage',event=>{if(editGestures&&event.key===GRIP_KEY){hands.forEach(h=>h.userData.applyGripSettings(readGripSettings()));updateTable();}});
 const restingPositions=[new THREE.Vector3(.83,.016,.28),new THREE.Vector3(-.83,.016,-.28)];
 function updateTable(){const y=tableHeight(hands[0].userData.settings);ground.position.y=y;ring.position.y=y+.005;restingPositions.forEach(v=>v.y=y+.012);meshes.forEach((m,i)=>{if(!held[i]&&!animation)m.position.y=y+.012;});}
 updateTable();
@@ -219,14 +220,14 @@ const gestureTuner=editGestures?mountGestureTuner({
   if(!gestureSnapshot)return;handShow=gestureSnapshot.handShow;meshes.forEach((m,i)=>m.visible=gestureSnapshot.visibility[i]);controls.minDistance=gestureSnapshot.minDistance;controls.maxDistance=gestureSnapshot.maxDistance;gestureSnapshot=null;
   controls.enabled=false;arenaCamera();busy=false;document.body.classList.remove('tuning-gesture');update();scheduleBot();
  }
-}):{settingsFor:readGestureSettings};
+}):{settingsFor:publishedGestureSettings};
 if(editGestures)$('#tune-gesture').onclick=()=>{if(busy||charging||view!=='arena')return;gestureTuner.open();};
 function persist(){saved.score=[...state.score];try{localStorage.setItem('dragon-caps-v1',JSON.stringify(saved));}catch{}}
 function update(){
   const finished=state.phase==='finished';
   matchCues.sync(state,{visible:view==='arena'&&Boolean(sessionUi?.canThrow)&&!document.body.classList.contains('in-lobby'),busy,charging,opponent:sessionUi?.opponent||'Bot'});
 
-  $('#status').textContent=state.phase==='rps'?'A tie! Let the fingers decide.':finished?(state.player===0?'The pair is yours!':'Your rival takes the pair.'):busy?(animation?'Sla-a-ap!':`Waiting for ${sessionUi?.opponent||'your rival'}…`):state.player===0?(state.phase==='pair'?'SLAM · Flip both caps to win.':'Your turn.'):`${sessionUi?.opponent||'Your rival'}’s turn${state.phase==='pair'?' · SLAM':''}.`;
+  $('#status').textContent=state.phase==='rps'?'A tie! Let the fingers decide.':finished?(state.player===0?'You win the round!':'Your rival wins the round.'):busy?(animation?'Sla-a-ap!':`Waiting for ${sessionUi?.opponent||'your rival'}…`):state.player===0?(state.phase==='pair'?'SLAM · Flip both caps to win.':'Your turn.'):`${sessionUi?.opponent||'Your rival'}’s turn${state.phase==='pair'?' · SLAM':''}.`;
 
   $('#slam').disabled=!sessionUi?.canThrow||busy||state.player!==0||!['duel','pair'].includes(state.phase);$('#slam').hidden=finished;
   $('#next').hidden=!finished||busy;$('#next').textContent='Rematch?';throwMeter.sync({available:!$('#slam').disabled,finished:finished||state.phase==='rps',turn:state.turn});
