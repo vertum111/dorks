@@ -27,10 +27,10 @@ See [`found-ownership.mjs`](found-ownership.mjs) and the tests in [`tests/owners
 
 ## Try it (judges)
 
-1. Open **/mint** → drag the cap to spin it and press **Flip cap**. You see the scuffed back of the edition. No wallet is needed.
-2. Open **/play** → **Practice with Bot** → hold the yellow **Hold to slam** button and release inside the striped target. The caps flip, and a tie goes to a 5-second rock-paper-scissors.
+1. Open the game lobby and select **Mint Found Caps** → drag the cap to spin it and press **Flip cap**. You see the scuffed back of the edition. No wallet is needed.
+2. Open the game lobby → **Practice with Bot** → hold the yellow **Hold to aim** button and release inside the striped target. The caps flip, and a tie goes to a 5-second rock-paper-scissors.
 3. On **/mint**, connect a NEAR mainnet wallet → **Claim Found Caps** → sign the message. The sponsor pays the gas and you get up to 3 random Found Caps. The game opens with one of them selected.
-4. In the game → **My dorks** shows the caps your wallet holds right now → **Use** → **Find a dork** → sign the table pass. You are now in the Found queue. To see a match, open a second browser profile with another wallet that holds a cap.
+4. In the game → **My dorks** shows the caps your wallet holds right now → equip a cap → **Find a dork** → sign the table pass. You are now in the Found queue. To see a match, open a second browser profile with another wallet that holds a cap.
 5. Transfer: on **/mint**, under **Pass a cap to a friend**, wallet B finds wallet A and sends **Request cap** (0.01 NEAR refundable deposit). Wallet A chooses **Approve & send**. Refresh both. The cap now shows in B's collection, and A can no longer queue with it.
 
 ## Run from source
@@ -39,9 +39,9 @@ Node.js 22.22.2+.
 
 ```sh
 npm ci
-npm test        # 75 tests: rules, timing, hand/cap geometry, matchmaking, NFT ownership gate
+npm test        # 80 tests: rules, timing, hand/cap geometry, matchmaking, NFT ownership gate
 npm run build
-node server.mjs # http://127.0.0.1:4173/play
+node server.mjs # http://127.0.0.1:4173/
 ```
 
 Local runs need no keys. You get Bot practice and the regular online queue. To try matchmaking, open two independent browser sessions and choose **Find a dork** in both. The Found queue and wallet features need a contract. See [MINT-DEPLOY.md](MINT-DEPLOY.md) for testnet setup.
@@ -67,7 +67,7 @@ For an isolated testnet backend, set `NEAR_NETWORK=testnet`, `FOUND_STAKES_ENABL
 
 ## Assets and credits
 
-- Dragon art, Found textures and emote stickers were generated with an AI image tool from our own art direction. The prompts are in `art-directions/` (not part of the build).
+- Dragon art, Found textures and emote stickers were generated with an AI image tool from our own art direction.
 - 3D hands: [WebXR generic-hand](https://github.com/immersive-web/webxr-input-profiles) (MIT), see `public/models/webxr-hand/`.
 - Fonts: Freckle Face, Pangolin and Dokdo (SIL OFL), with licenses in `public/fonts/`.
 - Reaction sound clips are third-party meme sounds. Each clip's source is listed in `public/audio/memes/manifest.json`. They remain the property of their owners and are not covered by this repository's license.
