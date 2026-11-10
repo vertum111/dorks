@@ -15,13 +15,12 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
  <div id="match-banner" class="match-banner" hidden><span id="match-opponent"></span><b id="match-series"></b><span id="stake-status" role="status"></span><button id="leave-table" class="text-button">Leave table</button></div>
  <dialog id="session-history" class="session-history" aria-labelledby="history-title"><button id="close-history" class="round-button" aria-label="Close session history">×</button><p class="eyebrow">THIS VISIT. ALL THE CHAOS.</p><h2 id="history-title">Your session</h2><div id="session-summary"></div><ol id="match-history"></ol><p class="history-empty">Your first bad decision is still ahead of you.</p></dialog>`;
  document.body.append(host);const $=s=>host.querySelector(s);
- let stakesEnabled=false,stakeBusy=false,heldStake=null,chargeRequest=null;
+ let stakesEnabled=false,stakeNetwork=null,stakeBusy=false,heldStake=null,chargeRequest=null,stakeCheckAt=0,stakeNotice='';
  let boundAccount=null,mode='lobby',room=null,token=null,seq=0,pollTimer,networkBusy=false,queued=false,connected=false,hidden=false,rematch=false,seenRoom=null,seenRound=0,practiceRound=0,history=[],error='',searchStarted=0;
  try{token=sessionStorage.getItem('dorks-lobby-token');history=JSON.parse(sessionStorage.getItem('dorks-session-history')||'[]');if(!Array.isArray(history))history=[];practiceRound=history.filter(h=>h.practice).length;}catch{}
- try{heldStake=JSON.parse(localStorage.getItem('dorks-testnet-stake')||'null');}catch{}
  function rememberStake(value){
   heldStake=value;
-  try{localStorage.setItem('dorks-testnet-stake',JSON.stringify(value));}catch{}
+  try{localStorage.setItem(`dorks-${stakeNetwork}-stake`,JSON.stringify(value));}catch{}
  }
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function saveHistory(){try{sessionStorage.setItem('dorks-session-history',JSON.stringify(history));}catch{}renderHistory();}
@@ -37,10 +36,11 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
   const d=dragons[getSelected()],stake=room?.stake;$('#lobby-cap-art').src=frontImage(d);$('#lobby-cap-name').textContent=isFound(d)?`${d.name} · Found`:d.name;
   $('#lobby-kicker').textContent=queued?'SHAKING THE DORK TREE':room?.status==='ready'?'A WILD DORK APPEARED':rematch?'RUN IT BACK?':'THE VERY ODD LOBBY';
   $('#lobby-title').innerHTML=queued?'Looking for<br>trouble…':room?.status==='ready'?`${escape(room.opponent)}<br>takes a seat.`:rematch?'One more<br>bad decision?':'Collect caps.<br>Lose friends.';
-  $('#lobby-message').textContent=error||(queued?(isFound(d)?'Looking for another player with a Found cap.':'Waiting for another player to tap Find a dork.'):room?.status==='ready'?(room.ready[room.side]?'You are ready. Waiting for the other dork…':'Both players must be ready before the caps fly.'):rematch?(room?.ready[room.side]?'Rematch requested. Waiting for your opponent…':'Same dork. Fresh pair. Both players must agree.'):'One cap each. One wonderfully bad decision.');
+  $('#lobby-message').textContent=error||(queued?(isFound(d)?'Looking for another player with a Found cap.':'Waiting for another player to tap Find a dork.'):room?.status==='ready'?(room.ready[room.side]?'You are ready. Waiting for the other dork…':'Both players must be ready before the caps fly.'):rematch?(room?.ready[room.side]?'Rematch requested. Waiting for your opponent…':'Same dork. Fresh pair. Both players must agree.'):(stakeNotice||'One cap each. One wonderfully bad decision.'));
   $('#find-staked').hidden=!stakesEnabled||queued||Boolean(room)||!isFound(d)||Boolean(heldStake);
+  $('#find-staked').textContent=stakeNetwork==='testnet'?'Find a stake match · Testnet':'Find a stake match';
   $('#find-staked').disabled=!connected||stakeBusy;
-  $('#refund-stake').hidden=!stakesEnabled||queued||Boolean(room)||!heldStake?.deadline||Date.now()<heldStake.deadline;
+  $('#refund-stake').hidden=!stakeNetwork||queued||Boolean(room)||!heldStake?.deadline||Date.now()<heldStake.deadline;
   $('#refund-stake').disabled=stakeBusy;
   $('#find-player').hidden=queued;$('#find-player').disabled=(!connected&&mode!=='practice')||Boolean(room?.ready[room.side]);
   $('#find-player').textContent=room?.status==='ready'?'Ready to play':rematch?'Request rematch':'Find a dork';
@@ -64,7 +64,12 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
  }
  function local(state){if(!room||room.side===0)return {...state,faces:[...state.faces],score:[...state.score]};return {...state,player:1-state.player,faces:[...state.faces].reverse(),score:[...state.score].reverse()};}
  function record(state,practice=false){const key=practice?`practice-${++practiceRound}`:`${room.id}-${room.round}`;if(history.some(h=>h.key===key))return;history.push({key,room:practice?'practice':room.id,opponent:practice?'Bot':room.opponent,caps:practice?[...api.practiceCaps]:room.side===0?[...room.caps]:[...room.caps].reverse(),won:state.player===0,turns:state.turn,method:({rps:'RPS showdown',forfeit:'Forfeit'})[state.wonBy]||'Cap slam',practice,at:Date.now()});saveHistory();}
- function process(data){connected=true;stakesEnabled=Boolean(data.stakesEnabled);queued=data.queued;const nextRoom=data.room;
+ function process(data){connected=true;stakesEnabled=Boolean(data.stakesEnabled);
+  if(data.stakeNetwork&&data.stakeNetwork!==stakeNetwork){
+   stakeNetwork=data.stakeNetwork;
+   try{heldStake=JSON.parse(localStorage.getItem(`dorks-${stakeNetwork}-stake`)||'null');}catch{heldStake=null;}
+  }
+  queued=data.queued;const nextRoom=data.room;
   if(!nextRoom){if(room&&mode==='online'){room=null;mode='lobby';rematch=false;onLobby();}render();return;}
   room=nextRoom;mode='online';
   if(room.stake?.status==='paid'&&heldStake?.id===room.stake.id){rememberStake(null);onStakeChange?.();}
@@ -90,7 +95,21 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
   }
   render();
  }
- async function poll(){if(networkBusy)return;networkBusy=true;try{if(!token){const c=await request('/api/session',{});token=c.token;try{sessionStorage.setItem('dorks-lobby-token',token);}catch{}}const data=await request(`/api/state?after=${seq}`);error='';process(data);}catch(e){connected=false;error='Lobby connection lost. Reconnecting…';if(/expired/.test(e.message)){token=null;seq=0;seenRoom=null;}render();}finally{networkBusy=false;}}
+ async function checkHeldStake(){
+  if(!heldStake||room||!stakeNetwork||Date.now()<stakeCheckAt)return;
+  stakeCheckAt=Date.now()+5000;
+  const saved=heldStake;
+  const {match,verdict}=await request('/api/stake?match='+encodeURIComponent(saved.id));
+  if(heldStake?.id!==saved.id)return;
+  if(verdict?.paid||(!match&&!verdict)){
+   if(verdict?.paid)stakeNotice='The previous match paid both caps to '+verdict.winner+'.';
+   rememberStake(null);onStakeChange?.();render();return;
+  }
+  if(verdict)stakeNotice='The winner is recorded. The payout is being processed.';
+  else if(match)rememberStake({...saved,deadline:Number(match.deadline_ms)});
+  render();
+ }
+ async function poll(){if(networkBusy)return;networkBusy=true;try{if(!token){const c=await request('/api/session',{});token=c.token;try{sessionStorage.setItem('dorks-lobby-token',token);}catch{}}const data=await request(`/api/state?after=${seq}`);error='';process(data);void checkHeldStake().catch(()=>{});}catch(e){connected=false;error='Lobby connection lost. Reconnecting…';if(/expired/.test(e.message)){token=null;seq=0;seenRoom=null;}render();}finally{networkBusy=false;}}
  async function back(){if(queued||room)await action('leave');room=null;mode='lobby';rematch=false;seq=0;seenRoom=null;onLobby();render();}
  async function queueFound(cap,staked=false){
   const pass=foundPass(cap);
@@ -109,11 +128,11 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
  $('#find-player').onclick=async()=>{if(room?.status==='ready'){
    if(!room.stake){await action('ready');return;}
    if(stakeBusy)return;
-   const {id,tokenId,contractId,deadline}=room.stake;
+   const {id,tokenId,contractId,deadline,network}=room.stake;
    stakeBusy=true;render();
    try{
     // Keep the recovery ID even if the browser closes during wallet signing.
-    const match={id,tokenId,contractId,deadline};rememberStake(match);
+    const match={id,tokenId,contractId,deadline,network};rememberStake(match);
     await lockStake(match);error='';await poll();
    }catch(e){error=e.message;}finally{stakeBusy=false;render();}
    return;
@@ -127,13 +146,14 @@ export function mountSessionUi({getSelected,foundPass=()=>null,lockStake,refundS
    if(status.match){
     rememberStake({...heldStake,deadline:Number(status.match.deadline_ms)});
     if(Date.now()<heldStake.deadline)throw Error('This stake is still active.');
-    await refundStake(heldStake);
+    if(status.verdict)throw Error('The winner is recorded. The payout is being processed.');
+    await refundStake({...heldStake,network:stakeNetwork});
    }
    rememberStake(null);error='';onStakeChange?.();
   }catch(e){error=e.message;}finally{stakeBusy=false;render();}
  };
  $('#cancel-search').onclick=back;$('#leave-table').onclick=()=>{
-  if(room?.stake&&room.round>0&&room.status!=='result'&&!window.confirm('Leave this testnet match and forfeit your staked cap?'))return;
+  if(room?.stake&&room.round>0&&room.status!=='result'&&!window.confirm('Leave this match and forfeit your staked cap?'))return;
   void back();
  };
  $('#practice').onclick=async()=>{if(room||queued)await action('leave');room=null;mode='practice';rematch=false;onPractice();render();};

@@ -1,7 +1,9 @@
 import {createServer} from 'node:http';
+import {fork} from 'node:child_process';
+import {once} from 'node:events';
 import {randomBytes} from 'node:crypto';
 import {matchApi} from '../match-server.mjs';
-import {testnetStakeChain} from '../stake-chain.mjs';
+import {stakeChain} from '../stake-chain.mjs';
 import {nearOwnershipGate} from '../found-ownership.mjs';
 import {messageHash} from '../found-api.mjs';
 import {dragons,isFound} from '../src/cap-catalog.js';
@@ -9,6 +11,22 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {Account, JsonRpcProvider, KeyPair, actions, teraToGas} from 'near-api-js';
+
+if(process.argv[2]==='--worker'){
+ const chain=stakeChain();
+ await chain.refresh();
+ assert.equal(chain.enabled,true,'Arbiter was not ready');
+ if(process.argv[3]==='hold'){
+  chain.pay=async()=>{throw Error('Test: payout paused');};
+  chain.recover=async()=>{};
+ }
+ const api=matchApi({gate:nearOwnershipGate(),stakes:chain});
+ const server=createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost')));
+ server.listen(0,'127.0.0.1',()=>process.send(server.address().port));
+ // Only the smoke runner uses this process entry point.
+ await new Promise(resolve=>process.on('disconnect',resolve));
+ process.exit(0);
+}
 
 const keys = JSON.parse(await fs.readFile(process.argv[2], 'utf8'));
 const accountId = role => {
@@ -49,7 +67,8 @@ result(await admin.createAccount({newAccountId:arbiterId, publicKey:arbiterKey.g
 await call(admin, 'set_stake_arbiter', {account_id:arbiterId});
 const open = () => call(arbiter, 'open_staked_match', {players:[aliceId,bobId], tokens:[a,b]});
 const lock = (player, match_id, token_id) => call(player, 'lock_match_cap', {match_id,token_id}, 1n);
-const payout = (player, match_id) => call(player, 'settle_staked_match', {match_id,winner:aliceId});
+const record = (player, match_id) => call(player, 'record_staked_winner', {match_id,winner:aliceId});
+const payout = (player, match_id) => call(player, 'pay_staked_winner', {match_id});
 if (process.argv.includes('--lobby')) {
  await lobby();
 } else {
@@ -57,7 +76,7 @@ const refundCase = await open();
 await lock(alice, refundCase, a);
 assert.equal(await owner(a), contractId);
 assert.equal((await get(refundCase)).entries[1].locked, false);
-await assert.rejects(payout(arbiter, refundCase));
+await assert.rejects(record(arbiter, refundCase));
 await assert.rejects(call(bob, 'refund_staked_match', {match_id:refundCase}));
 console.log('One cap locked. Early payout and early refund rejected');
 const deadline = Number((await get(refundCase)).deadline_ms);
@@ -73,10 +92,12 @@ await assert.rejects(lock(bob, match, a));
 await lock(alice, match, a);
 await lock(bob, match, b);
 assert.deepEqual(await Promise.all([owner(a),owner(b)]), [contractId,contractId]);
-await assert.rejects(payout(bob, match));
-await payout(arbiter, match);
+await assert.rejects(record(bob, match));
+await record(arbiter, match);
+await assert.rejects(call(arbiter,'record_staked_winner',{match_id:match,winner:bobId}));
+await payout(bob, match);
 assert.deepEqual(await Promise.all([owner(a),owner(b)]), [aliceId,aliceId]);
-await assert.rejects(payout(arbiter, match));
+await payout(arbiter, match);
 await call(alice, 'nft_transfer', {receiver_id:bobId,token_id:b}, 1n);
 console.log('Both caps paid to winner. Unauthorized and repeated payouts rejected. Test holdings restored.');
 
@@ -87,7 +108,7 @@ async function lobby() {
  result(await arbiter.signAndSendTransaction({
   receiverId:arbiterId,waitUntil:'FINAL',actions:[
    actions.addFunctionCallAccessKey(key.getPublicKey(),contractId,
-    ['open_staked_match','settle_staked_match'],200_000_000_000_000_000_000_000n),
+    ['open_staked_match','record_staked_winner','pay_staked_winner'],200_000_000_000_000_000_000_000n),
   ],
  }));
  await provider.viewAccessKey({accountId:arbiterId,publicKey:key.getPublicKey().toString(),finalityQuery:{finality:'final'}});
@@ -96,10 +117,22 @@ async function lobby() {
   FOUND_STAKE_ARBITER_ID:arbiterId,FOUND_STAKE_ARBITER_KEY:key.toString(),
   FOUND_CHALLENGE_SECRET:randomBytes(32).toString('hex'),
  };
- const api=matchApi({gate:nearOwnershipGate(config),stakes:testnetStakeChain(config)});
- const server=createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost')));
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const url='http://127.0.0.1:'+server.address().port;
+ let worker,url;
+ async function start(mode){
+  worker=fork(new URL(import.meta.url),['--worker',mode],{env:{...process.env,...config}});
+  const port=await Promise.race([
+   once(worker,'message').then(([port])=>port),
+   once(worker,'exit').then(()=>{throw Error('Test server exited before listening');}),
+  ]);
+  url='http://127.0.0.1:'+port;
+ }
+ async function stop(){
+  const done=once(worker,'exit');
+  worker.kill('SIGKILL');
+  await done;
+  worker=null;
+ }
+ await start('hold');
  async function request(path,session,body){
   const response=await fetch(url+path,{
    method:body?'POST':'GET',headers:{...(session?{Authorization:'Bearer '+session}:{})},
@@ -159,11 +192,23 @@ async function lobby() {
     await action(actor,{type:'throw',round:room.round});
    }
   }
-  const final=await until(x,room=>room?.stake?.status==='paid');
+  const final=await until(x,room=>room?.status==='result');
   const winner=final.state.player===0?aliceId:bobId;
+  assert.deepEqual(await view('get_stake_verdict',{match_id:id}),{winner,paid:false});
+  assert.deepEqual(await Promise.all([owner(a),owner(b)]),[contractId,contractId]);
+  console.log('Winner finalized on NEAR; stopping the server before payout');
+  await stop();
+  await assert.rejects(call(bob,'refund_staked_match',{match_id:id}),/Winner already recorded/);
+  await start('resume');
+  let paid=false;
+  for(let i=0;i<45&&!paid;i++){
+   paid=(await view('get_stake_verdict',{match_id:id})).paid;
+   if(!paid)await sleep(1000);
+  }
+  assert.equal(paid,true,'Fresh server did not recover the pending payout');
   assert.deepEqual(await Promise.all([owner(a),owner(b)]),[winner,winner]);
-  console.log('HTTP match finished; both NFTs arrived in the winner’s wallet');
+  console.log('Restart recovered payout; both NFTs arrived in the winner’s wallet');
   if(winner===aliceId)await call(alice,'nft_transfer',{receiver_id:bobId,token_id:b},1n);
   else await call(bob,'nft_transfer',{receiver_id:aliceId,token_id:a},1n);
- }finally{server.close();}
+ }finally{if(worker)await stop();}
 }

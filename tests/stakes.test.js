@@ -3,11 +3,13 @@ import assert from 'node:assert/strict';
 import {createMatchmaker} from '../match-server.mjs';
 import {dragons,isFound} from '../src/cap-catalog.js';
 
-async function table() {
+async function table({beforeRecord=async()=>{}}={}) {
  let now=1000;
  const entries=[{locked:false},{locked:false}],payouts=[];
+ let verdict;
  const chain={contractId:'caps.testnet',open:async()=> '1',get:async()=>({entries,deadline_ms:'600000'}),
-  settle:async(id,winner)=>{payouts.push({id,winner});}};
+  record:async(_id,winner)=>{await beforeRecord();verdict={winner,paid:false};},verdict:async()=>verdict,
+  pay:async(id)=>{payouts.push({id,winner:verdict.winner});verdict.paid=true;}};
  const game=createMatchmaker({now:()=>now,stakes:chain,random:()=>0.1});
  const alice=Object.assign(game.create(),{wallet:'alice.testnet',foundToken:'found-01-01'});
  const bob=Object.assign(game.create(),{wallet:'bob.testnet',foundToken:'found-02-01'});
@@ -63,6 +65,23 @@ test('a player cannot avoid settlement by letting the throw clock expire', async
  entries.forEach(entry=>{entry.locked=true;});
  advance(1600);await game.updateStake(game.table(alice));
  advance(20001);game.tick();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(game.snapshot(bob).room.status,'result');
+ assert.deepEqual(payouts,[{id:'1',winner:'bob.testnet'}]);
+});
+
+
+test('the lobby does not announce a winner before the durable record exists', async()=>{
+ let confirm;
+ const beforeRecord=()=>new Promise(resolve=>{confirm=resolve;});
+ const {game,alice,bob,entries,payouts,advance}=await table({beforeRecord});
+ entries.forEach(entry=>{entry.locked=true;});
+ advance(1600);await game.updateStake(game.table(alice));
+ game.action(alice,{type:'leave'});
+ assert.equal(game.snapshot(bob).room.status,'recording');
+ assert.ok(!game.snapshot(bob).room.events.some(event=>event.type==='result'));
+ assert.deepEqual(payouts,[]);
+ confirm();
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(game.snapshot(bob).room.status,'result');
  assert.deepEqual(payouts,[{id:'1',winner:'bob.testnet'}]);

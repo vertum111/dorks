@@ -107,8 +107,8 @@ export function mountGameWallet({onChange, connectorFor = getFoundConnector, fet
  }
 
  async function stakeAction(method, stake) {
-  if (network !== 'testnet' || stake.contractId !== contractId || !/^\d+$/.test(stake.id) || !accountId) {
-   throw Error('Connect the correct NEAR testnet wallet first.');
+  if (stake.network !== network || stake.contractId !== contractId || !/^\d+$/.test(stake.id) || !accountId) {
+   throw Error('Connect the wallet on the correct NEAR network first.');
   }
   const lock = method === 'lock_match_cap';
   if (lock && !caps.some(cap => cap.id === stake.tokenId)) throw Error('This cap is no longer in your wallet.');

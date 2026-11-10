@@ -18,7 +18,7 @@ export function createMatchmaker({now=Date.now,random=rand,stakes=null}={}){
   c.room=null;
   if(r.closed)return;
   if(r.stake&&r.round){
-   if(r.status==='result')return;
+   if(r.status==='result'||r.status==='recording')return;
    if(r.state.phase!=='finished'){
     const winner=1-r.players.indexOf(c);
     if(now()-r.players[winner].last>45000||now()>=r.stake.deadline){
@@ -48,7 +48,7 @@ export function createMatchmaker({now=Date.now,random=rand,stakes=null}={}){
    stakes.open(stake.accounts,stake.tokens).then(async id=>{
     if(typeof id!=='string'||!/^\d+$/.test(id))throw Error('Invalid stake match ID.');
     stake.id=id;stake.status='locking';void updateStake(r)?.catch(()=>{});
-   }).catch(error=>{console.warn('Could not open testnet stake:',error.message);stake.status='unavailable';});
+   }).catch(error=>{console.warn('Could not open stake:',error.message);stake.status='unavailable';});
   }
   rooms.set(r.id,r);c.room=other.room=r.id;event(r,'matched');
  }
@@ -68,33 +68,52 @@ export function createMatchmaker({now=Date.now,random=rand,stakes=null}={}){
   }).finally(()=>{stake.check=null;});
   return stake.check;
  }
- function settle(r){
+ function persistWinner(r){
   const stake=r.stake;
-  if(stake.status!=='pending'||now()<stake.retryAt)return;
-  if(now()>=stake.deadline){stake.status='refund';return;}
-  stake.status='paying';
-  stakes.settle(stake.id,stake.accounts[r.state.player]).then(()=>{stake.status='paid';}).catch(()=>{
-   stake.status='pending';stake.retryAt=now()+2500;
-  });
+  if(stake.recording||stake.recorded||now()<(stake.retryAt||0))return;
+  const winner=stake.accounts[r.state.player];
+  stake.status='pending';
+  stake.recording=(async()=>{
+   try{await stakes.record(stake.id,winner);}
+   catch(error){
+    const verdict=await stakes.verdict(stake.id);
+    if(verdict?.winner!==winner)throw error;
+   }
+   stake.recorded=true;
+   stake.status='paying';
+   void stakes.pay(stake.id).then(()=>{stake.status='paid';}).catch(()=>{});
+  })().catch(()=>{
+   stake.retryAt=now()+2500;
+   if(now()>=stake.deadline){stake.status='refund';r.closed=true;}
+  }).finally(()=>{stake.recording=null;});
  }
  function result(r){
   if(r.history.some(h=>h.round===r.round))return;
-  r.status='result';r.until=0;
+  r.until=0;
+  if(r.stake&&!r.stake.recorded){
+   r.status='recording';persistWinner(r);return;
+  }
+  r.status='result';
   r.history.push({round:r.round,caps:[...r.caps],winner:r.state.player,turns:r.state.turn,
    method:({rps:'RPS',forfeit:'Forfeit'})[r.state.wonBy]||'Caps',at:now()});
-  if(r.stake){r.stake.status='pending';r.stake.retryAt=0;settle(r);}
   event(r,'result',{state:r.state});
  }
  function beginRps(r){r.status='rps';r.choices=[null,null];r.deadline=now()+5000;event(r,'rps',{state:r.state,deadline:r.deadline});}
  function tick(){
   for(const c of clients.values()){if(now()-c.last>(rooms.get(c.room)?.stake?45000:15000)){if(c.queued)cancel(c);if(c.room)leave(c);}if(now()-c.last>3600000)clients.delete(c.token);}
   for(const r of rooms.values()){
-   if(r.stake?.status==='pending')settle(r);
+   if(!r.closed&&r.status==='recording')result(r);
+   if(r.stake?.status==='paying'&&!r.stake.verifying&&now()>(r.stake.verifyAfter||0)){
+    r.stake.verifyAfter=now()+5000;
+    r.stake.verifying=stakes.verdict(r.stake.id).then(verdict=>{
+     if(verdict?.paid)r.stake.status='paid';
+    }).catch(()=>{}).finally(()=>{r.stake.verifying=null;});
+   }
    if(r.closed||r.status==='result'){
     if(!['paying','pending'].includes(r.stake?.status)&&r.players.every(c=>c.room!==r.id))rooms.delete(r.id);
     continue;
    }
-   if(r.stake?.status==='active'&&now()>=r.stake.deadline){r.stake.status='refund';r.closed=true;continue;}
+   if(r.stake?.status==='active'&&r.state.phase!=='finished'&&now()>=r.stake.deadline){r.stake.status='refund';r.closed=true;continue;}
    if(r.until&&now()>=r.until){r.until=0;if(r.state.phase==='finished')result(r);else if(r.state.phase==='rps')beginRps(r);else {r.status='playing';r.turnDeadline=now()+20000;}}
    if(r.stake&&r.status==='playing'&&now()>=r.turnDeadline){
     const winner=1-r.state.player;
@@ -105,11 +124,12 @@ export function createMatchmaker({now=Date.now,random=rand,stakes=null}={}){
     const [a,b]=r.choices;const winner=a===null&&b===null?null:a===null?1:b===null?0:rpsWinner(a,b);
     if(winner===null){r.state={...r.state,rpsRound:r.state.rpsRound+1};}
     else{r.state={...r.state,phase:'finished',player:winner,score:winner===0?[2,0]:[0,2],wonBy:'rps'};}
+    if(r.stake&&winner!==null)persistWinner(r);
     r.status='revealing';r.until=now()+1800;event(r,'reveal',{choices:[...r.choices],state:r.state});
    }
   }
  }
- function action(c,body){tick();if(body.type==='queue'){if(body.staked&&!stakes)throw Error('Stake matches are unavailable.');join(c,body.cap,body.staked===true);return;}if(body.type==='cancel'){cancel(c);return;}if(body.type==='leave'){leave(c);return;}
+ function action(c,body){tick();if(body.type==='queue'){if(body.staked&&(!stakes||stakes.enabled===false))throw Error('Stake matches are unavailable.');join(c,body.cap,body.staked===true);return;}if(body.type==='cancel'){cancel(c);return;}if(body.type==='leave'){leave(c);return;}
   const r=rooms.get(c.room);if(!r||r.closed)throw Error('This table has closed. Find another dork.');const side=r.players.indexOf(c);
   if(body.round!==r.round)throw Error('That round has ended.');
   if(r.stake&&['ready','rematch'].includes(body.type))throw Error('Stake matches start after both deposits. Find a new table for another match.');
@@ -132,14 +152,14 @@ export function createMatchmaker({now=Date.now,random=rand,stakes=null}={}){
     skill=timingResult(timingPosition(elapsed),r.targets.get(r.state.turn)).skill;
    }
    if(!Number.isFinite(skill)||skill<0||skill>1)throw Error('Invalid throw.');
-   const previous=r.state;r.state=resolveTurn(r.state,skill,random);r.until=now()+1600;r.status='throwing';event(r,'throw',{previous,state:r.state,skill});
+   const previous=r.state;r.state=resolveTurn(r.state,skill,random);r.until=now()+1600;r.status='throwing';if(r.stake&&r.state.phase==='finished')persistWinner(r);event(r,'throw',{previous,state:r.state,skill});
   }else if(body.type==='rps'){
    if(r.status!=='rps'||!RPS_CHOICES.includes(body.choice))throw Error('Pick before the timer ends.');r.choices[side]=body.choice;
   }else if(body.type==='rematch'){
    if(r.status!=='result')throw Error('Finish this round first.');r.ready[side]=true;if(r.ready.every(Boolean))start(r);
   }else throw Error('Unknown action.');
  }
- function snapshot(c,after=0){tick();const r=rooms.get(c.room),side=r?.players.indexOf(c);if(r?.closed)c.room=null;return {name:c.name,queued:c.queued,stakesEnabled:Boolean(stakes),serverTime:now(),room:r?{id:r.id,side,opponent:r.players[1-side].name,caps:r.caps,state:r.state,status:r.closed?'left':r.status,ready:r.ready,round:r.round,deadline:r.deadline,turnDeadline:r.stake?r.turnDeadline:undefined,stake:r.stake?{id:r.stake.id,contractId:stakes.contractId,deadline:r.stake.deadline,locked:r.stake.locked,status:r.stake.status,tokenId:r.stake.tokens[side],target:r.targets.get(r.state.turn)}:null,history:r.history,seq:r.seq,events:r.events.filter(e=>e.id>after)}:null};}
+ function snapshot(c,after=0){tick();const r=rooms.get(c.room),side=r?.players.indexOf(c);if(r?.closed)c.room=null;return {name:c.name,queued:c.queued,stakesEnabled:Boolean(stakes&&stakes.enabled!==false),stakeNetwork:stakes?.network,serverTime:now(),room:r?{id:r.id,side,opponent:r.players[1-side].name,caps:r.caps,state:r.state,status:r.closed?'left':r.status,ready:r.ready,round:r.round,deadline:r.deadline,turnDeadline:r.stake?r.turnDeadline:undefined,stake:r.stake?{id:r.stake.id,network:stakes.network,contractId:stakes.contractId,deadline:r.stake.deadline,locked:r.stake.locked,status:r.stake.status,tokenId:r.stake.tokens[side],target:r.targets.get(r.state.turn)}:null,history:r.history,seq:r.seq,events:r.events.filter(e=>e.id>after)}:null};}
  function table(c){return rooms.get(c.room);}
  return {create,auth,action,snapshot,tick,table,updateStake};
 }
@@ -182,7 +202,11 @@ export async function guardFoundAction(gate,mm,c,body){
  }
  return null;
 }
-export function matchApi({siteOrigin,gate=null,stakes=null}={}){const mm=createMatchmaker({stakes});if(stakes)setInterval(mm.tick,1000).unref();return async(req,res,url)=>{
+export function matchApi({siteOrigin,gate=null,stakes=null}={}){const mm=createMatchmaker({stakes});if(stakes){
+ const recover=()=>void stakes.recover().catch(error=>console.warn('Stake payout recovery:',error.message));
+ const refresh=()=>void stakes.refresh?.();
+ refresh();recover();setInterval(refresh,30000).unref();setInterval(recover,5000).unref();setInterval(mm.tick,1000).unref();
+}return async(req,res,url)=>{
  if(!url.pathname.startsWith('/api/'))return false;
  res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');
  try{
@@ -193,7 +217,8 @@ export function matchApi({siteOrigin,gate=null,stakes=null}={}){const mm=createM
    const id=url.searchParams.get('match');
    if(!/^[1-9]\d{0,19}$/.test(id||''))throw Error('Invalid match ID.');
    const game=await stakes.get(id);
-   res.end(JSON.stringify({match:game}));return true;
+   const verdict=await stakes.verdict(id);
+   res.end(JSON.stringify({match:game,verdict}));return true;
   }
   if(url.pathname==='/api/state'&&req.method==='GET'){await mm.updateStake(mm.table(c)||{})?.catch(()=>{});res.end(JSON.stringify(mm.snapshot(c,Number(url.searchParams.get('after'))||0)));return true;}
   if(url.pathname==='/api/action'&&req.method==='POST'){

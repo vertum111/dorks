@@ -1,6 +1,6 @@
 import http from 'node:http';
 import {matchApi} from './match-server.mjs';
-import {testnetStakeChain} from './stake-chain.mjs';
+import {stakeChain} from './stake-chain.mjs';
 import {foundApi} from './found-api.mjs';
 import {nearOwnershipGate} from './found-ownership.mjs';
 import fs from 'node:fs';
@@ -9,7 +9,9 @@ import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 const root=path.join(path.dirname(fileURLToPath(import.meta.url)),'dist');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.glb':'model/gltf-binary','.json':'application/json','.woff2':'font/woff2','.mp3':'audio/mpeg','.wav':'audio/wav'};
-const api=matchApi({siteOrigin:process.env.DORKS_SITE_ORIGIN,gate:nearOwnershipGate(),stakes:testnetStakeChain()});
+let stakes;
+try{stakes=stakeChain();}catch{console.warn('Stake configuration is invalid.');}
+const api=matchApi({siteOrigin:process.env.DORKS_SITE_ORIGIN,gate:nearOwnershipGate(),stakes});
 const found=foundApi();
 const server=http.createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost');if(url.pathname==='/healthz'){res.end('ok');return;}

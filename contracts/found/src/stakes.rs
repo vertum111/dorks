@@ -1,5 +1,6 @@
 use super::{env, near, require, AccountId, Contract, ContractExt, LookupMap, TokenId, U64};
 use near_contract_standards::non_fungible_token::refund_approved_account_ids;
+use near_sdk::{borsh, collections::UnorderedSet};
 
 const ARBITER: &[u8] = b"stake-arbiter-v1";
 const SEQUENCE: &[u8] = b"stake-sequence-v1";
@@ -22,6 +23,31 @@ pub struct StakedMatch {
 
 fn matches() -> LookupMap<u64, StakedMatch> {
     LookupMap::new(b"staked-matches-v1".to_vec())
+}
+
+#[near(serializers = [borsh, json])]
+pub struct StakeVerdict {
+    pub winner: AccountId,
+    pub paid: bool,
+}
+
+const PENDING: &[u8] = b"stake-pending-state-v1";
+
+fn pending() -> UnorderedSet<u64> {
+    env::storage_read(PENDING)
+        .map(|data| borsh::from_slice(&data).expect("Invalid payout index"))
+        .unwrap_or_else(|| UnorderedSet::new(b"stake-pending-items-v1".to_vec()))
+}
+
+fn save_pending(index: &UnorderedSet<u64>) {
+    env::storage_write(
+        PENDING,
+        &borsh::to_vec(index).expect("Invalid payout index"),
+    );
+}
+
+fn verdicts() -> LookupMap<u64, StakeVerdict> {
+    LookupMap::new(b"stake-verdicts-v1".to_vec())
 }
 
 fn arbiter() -> Option<AccountId> {
@@ -49,6 +75,10 @@ impl Contract {
             "Use a dedicated arbiter account"
         );
         env::storage_write(ARBITER, account_id.as_bytes());
+    }
+
+    pub fn stake_arbiter(&self) -> Option<AccountId> {
+        arbiter()
     }
 
     pub fn open_staked_match(&self, players: [AccountId; 2], tokens: [TokenId; 2]) -> U64 {
@@ -122,10 +152,14 @@ impl Contract {
         store.insert(&match_id.0, &game);
     }
 
-    pub fn settle_staked_match(&mut self, match_id: U64, winner: AccountId) {
+    pub fn record_staked_winner(&self, match_id: U64, winner: AccountId) {
         require_arbiter();
-        let mut store = matches();
-        let game = store.get(&match_id.0).expect("Unknown match");
+        let mut results = verdicts();
+        if let Some(existing) = results.get(&match_id.0) {
+            require!(existing.winner == winner, "Winner already recorded");
+            return;
+        }
+        let game = matches().get(&match_id.0).expect("Unknown match");
         require!(
             env::block_timestamp_ms() < game.deadline_ms.0,
             "Match expired"
@@ -138,14 +172,57 @@ impl Contract {
             game.entries.iter().any(|entry| entry.player == winner),
             "Winner must be one of the players"
         );
+        results.insert(
+            &match_id.0,
+            &StakeVerdict {
+                winner,
+                paid: false,
+            },
+        );
+        let mut index = pending();
+        index.insert(&match_id.0);
+        save_pending(&index);
+    }
+
+    pub fn get_stake_verdict(&self, match_id: U64) -> Option<StakeVerdict> {
+        verdicts().get(&match_id.0)
+    }
+
+    pub fn pending_stake_payouts(&self) -> Vec<U64> {
+        pending().iter().take(20).map(U64).collect()
+    }
+
+    // Anyone may submit this call. Only the recorded winner can receive the caps.
+    pub fn pay_staked_winner(&mut self, match_id: U64) {
+        let mut results = verdicts();
+        let mut verdict = results.get(&match_id.0).expect("No recorded winner");
+        if verdict.paid {
+            return;
+        }
+        let mut store = matches();
+        let game = store.get(&match_id.0).expect("Unknown match");
         let custody = env::current_account_id();
         for entry in &game.entries {
-            self.move_match_cap(&custody, &winner, &entry.token_id, "DORKS match payout");
+            self.move_match_cap(
+                &custody,
+                &verdict.winner,
+                &entry.token_id,
+                "DORKS match payout",
+            );
         }
         store.remove(&match_id.0);
+        verdict.paid = true;
+        results.insert(&match_id.0, &verdict);
+        let mut index = pending();
+        index.remove(&match_id.0);
+        save_pending(&index);
     }
 
     pub fn refund_staked_match(&mut self, match_id: U64) {
+        require!(
+            !verdicts().contains_key(&match_id.0),
+            "Winner already recorded"
+        );
         let mut store = matches();
         let game = store.get(&match_id.0).expect("Unknown match");
         require!(
