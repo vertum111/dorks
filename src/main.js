@@ -88,6 +88,11 @@ $('#app').innerHTML=`
 </main>
 <dialog id="cap-detail" class="cap-detail" aria-labelledby="cap-detail-title">
  <header><div><p id="cap-detail-number" class="eyebrow"></p><h2 id="cap-detail-title"></h2></div><button id="close-cap-detail" class="round-button" aria-label="Close cap preview" autofocus>×</button></header>
+ <nav class="cap-browse" aria-label="Browse caps">
+  <button id="cap-previous" class="paper-button" aria-label="Previous cap">← Previous</button>
+  <span id="cap-position" aria-live="polite"></span>
+  <button id="cap-next" class="paper-button" aria-label="Next cap">Next →</button>
+ </nav>
  <div id="cap-preview" class="cap-preview" role="group" aria-label="Rotatable 3D cap"></div>
  <p id="cap-preview-status" role="status" hidden></p>
  <div class="cap-preview-controls">
@@ -354,6 +359,8 @@ const capPreview=createCapPreview({
 });
 let previewIndex=null;
 let previewTrigger;
+let previewLoad;
+const bookSlots=()=>[...$('#book-pages').querySelectorAll('button[data-cap-index]')];
 function updateCapDetail(){
  const editions=walletCaps.filter(cap=>cap.index===previewIndex);
  const selectable=previewIndex===0||editions.length>0;
@@ -370,7 +377,10 @@ function updateCapDetail(){
 function openCapDetail(index,trigger){
  const cap=dragons[index];
  previewIndex=index;
- previewTrigger=trigger;
+ if(!capDetail.open)previewTrigger=trigger;
+ const slots=bookSlots();
+ const position=slots.findIndex(slot=>Number(slot.dataset.capIndex)===index);
+ $('#cap-position').textContent=`${position+1} / ${slots.length}`;
  $('#book-edition').replaceChildren();
  $('#cap-detail-number').textContent=`CAP № ${String(cap.originalId??cap.id).padStart(2,'0')}`;
  $('#cap-detail-title').textContent=cap.name;
@@ -382,18 +392,21 @@ function openCapDetail(index,trigger){
  const status=$('#cap-preview-status');
  status.hidden=false;
  status.textContent='Loading cap…';
- capDetail.showModal();
+ if(!capDetail.open)capDetail.showModal();
  audio.play('browse');
- void capPreview.open(cap).then(()=>{
-  if(previewIndex===index)status.hidden=true;
+ const load=capPreview.open(cap);
+ previewLoad=load;
+ void load.then(()=>{
+  if(previewLoad===load)status.hidden=true;
  },()=>{
-  if(previewIndex===index)status.textContent='The 3D preview could not load.';
+  if(previewLoad===load)status.textContent='The 3D preview could not load.';
  });
 }
 function closeCapDetail(){
  if(!capDetail.open)return;
  capDetail.close();
  capPreview.close();
+ previewLoad=null;
  previewIndex=null;
 }
 $('#close-cap-detail').onclick=closeCapDetail;
@@ -403,6 +416,21 @@ capDetail.onclose=()=>{
  if(capDetail.open||view!=='collection')return;
  const target=previewTrigger?.isConnected?previewTrigger:$('#book-title');
  target.focus({preventScroll:true});
+};
+function browseCaps(direction){
+ const slots=bookSlots();
+ const position=slots.findIndex(slot=>Number(slot.dataset.capIndex)===previewIndex);
+ const next=slots[wrapCap(position+direction,slots.length)];
+ if(next)openCapDetail(Number(next.dataset.capIndex));
+}
+$('#cap-previous').onclick=()=>browseCaps(-1);
+$('#cap-next').onclick=()=>browseCaps(1);
+capDetail.onkeydown=event=>{
+ if(event.target.closest('select')||event.altKey||event.ctrlKey||event.metaKey)return;
+ if(event.key==='ArrowLeft'||event.key==='ArrowRight'){
+  event.preventDefault();
+  browseCaps(event.key==='ArrowLeft'?-1:1);
+ }
 };
 $('#cap-left').onclick=()=>capPreview.rotate(-Math.PI/4);
 $('#cap-right').onclick=()=>capPreview.rotate(Math.PI/4);
@@ -432,6 +460,7 @@ function renderBook(){
    const number=String(dragon.originalId??dragon.id).padStart(2,'0');
    slot.innerHTML=`<span class="book-number">№ ${number}</span><span class="book-art"><img src="/art/album/${dragon.id}.webp" alt="" loading="lazy" decoding="async" width="100" height="100"></span><strong>${dragon.name}</strong><span class="book-cap-status">${owned?'Collected':starter?'Starter':'Locked'}</span>`;
    slot.type='button';
+   slot.dataset.capIndex=index;
    slot.setAttribute('aria-haspopup','dialog');
    slot.onclick=()=>openCapDetail(index,slot);
    item.append(slot);

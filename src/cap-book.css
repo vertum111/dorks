@@ -91,7 +91,7 @@ dialog.cap-detail {
  padding: 16px clamp(14px, 4vw, 26px);
  overflow: auto;
 }
-.cap-detail header, .cap-detail footer, .cap-preview-controls {
+.cap-detail header, .cap-detail footer, .cap-preview-controls, .cap-browse {
  display: flex;
  align-items: center;
  justify-content: space-between;
@@ -124,3 +124,7 @@ dialog.cap-detail {
  .book-header .paper-button {font-size: 16px; min-height: 44px;}
  .book-cover p:not(.eyebrow) {font-size: 16px;}
 }
+
+.cap-browse {margin-top: 10px;}
+.cap-browse .paper-button {font-size: clamp(14px, 4vw, 18px); padding: 4px 9px; min-height: 44px;}
+#cap-position {white-space: nowrap; font-size: 15px; font-variant-numeric: tabular-nums;}
